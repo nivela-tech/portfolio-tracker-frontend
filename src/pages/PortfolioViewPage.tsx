@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     Paper,
     Typography,
-    Button,
     Dialog,
     Box,
     IconButton,
@@ -22,25 +21,26 @@ import {
     ListItem,
     ListItemText,
     ListItemButton,
-    Divider
+    Divider,
+    Button // Ensured Button is imported
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AddIcon from '@mui/icons-material/Add';
 import PieChartIcon from '@mui/icons-material/PieChart';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import DescriptionIcon from '@mui/icons-material/Description'; 
+import TableChartIcon from '@mui/icons-material/TableChart';   
 import { PortfolioEntry, PortfolioAccount } from '../types/portfolio';
 import { PortfolioTable } from '../components/PortfolioTable';
 import { PortfolioChart } from '../components/PortfolioChart';
 import { AddEntryForm } from '../components/AddEntryForm';
 import { portfolioApi } from '../services/portfolioApi';
 import { accountApi } from '../services/accountApi';
-import { NetWorthDisplay } from '../components/NetWorthDisplay';
-import { PORTFOLIO_TYPES, CURRENCIES, COUNTRIES } from '../utils/constants';
-import { convertCurrency } from '../utils/currencyConverter';
 import { NetWorthBox } from '../components/NetWorthBox';
 import { AccountList } from '../components/AccountList';
 import { ChartControls } from '../components/ChartControls';
+import { convertCurrency } from '../utils/currencyConverter'; // Ensured convertCurrency is imported
 
 export const PortfolioViewPage: React.FC = () => {
     const { accountId } = useParams<{ accountId: string }>();
@@ -58,7 +58,6 @@ export const PortfolioViewPage: React.FC = () => {
     const [groupBy, setGroupBy] = useState<'type' | 'currency' | 'country' | 'source'>('type');
     const [selectedCurrency, setSelectedCurrency] = useState('SGD');
     const [showGraph, setShowGraph] = useState(true);
-    // Combined view when no accountId is present in the URL
     const isCombinedView = !accountId;
 
     const loadData = async () => {
@@ -67,9 +66,7 @@ export const PortfolioViewPage: React.FC = () => {
             setError(null);
 
             if (isCombinedView) {
-                // Get the combined portfolio
-                const entriesData = await portfolioApi.getAllEntries(); // Use getAllEntries without accountId to get all entries
-                console.log('All entries loaded:', entriesData);
+                const entriesData = await portfolioApi.getAllEntries();
                 setEntries(entriesData);
                 setAccount(null);
             } else {
@@ -86,34 +83,31 @@ export const PortfolioViewPage: React.FC = () => {
             setLoading(false);
         }
     };
-    const loadAllAccounts = async () => {
+
+    const loadAllAccountsData = async () => { // Renamed to avoid conflict with component name
         try {
-            // Don't set loading state here to avoid UI flickering
             const accountsData = await accountApi.getAllAccounts();
             setAllAccounts(accountsData);
-            
-            // Load entries for each account
-            const entriesMap = new Map<number, PortfolioEntry[]>();
-            
-            for (const account of accountsData) {
+            const currentAccountEntries = new Map<number, PortfolioEntry[]>(); // Use a different name
+            for (const acc of accountsData) {
                 try {
-                    const accountEntries = await portfolioApi.getAllEntries(account.id);
-                    entriesMap.set(account.id, accountEntries);
+                    const accEntries = await portfolioApi.getAllEntries(acc.id);
+                    currentAccountEntries.set(acc.id, accEntries);
                 } catch (err) {
-                    console.error(`Failed to load entries for account ${account.id}:`, err);
+                    console.error(`Failed to load entries for account ${acc.id}:`, err);
                 }
             }
-            
-            setAccountEntries(entriesMap);
+            setAccountEntries(currentAccountEntries);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to load accounts';
             setError(message);
         }
     };
+
     useEffect(() => {
         loadData();
         if (isCombinedView) {
-            loadAllAccounts();
+            loadAllAccountsData(); // Call renamed function
         }
     }, [accountId, isCombinedView]);
 
@@ -123,6 +117,7 @@ export const PortfolioViewPage: React.FC = () => {
             const newEntry = await portfolioApi.addEntry({ ...entry, accountId: parseInt(accountId!) });
             setEntries([...entries, newEntry]);
             setIsAddDialogOpen(false);
+            if (isCombinedView) loadAllAccountsData();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to add entry';
             setError(message);
@@ -136,6 +131,7 @@ export const PortfolioViewPage: React.FC = () => {
             setEntries(entries.map(e => e.id === updatedEntry.id ? updatedEntry : e));
             setIsEditDialogOpen(false);
             setSelectedEntry(null);
+            if (isCombinedView) loadAllAccountsData();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update entry';
             setError(message);
@@ -147,43 +143,60 @@ export const PortfolioViewPage: React.FC = () => {
             setError(null);
             await portfolioApi.deleteEntry(entryId);
             setEntries(entries.filter(e => e.id !== entryId));
+            if (isCombinedView) loadAllAccountsData();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete entry';
             setError(message);
         }
-    };    const handleCloseError = () => {
+    }; 
+
+    const handleCloseError = () => {
         setError(null);
-    };    // Calculate total net worth for all entries in the selected currency
+    };
+
+    const handleExport = async (format: 'xlsx' | 'csv') => {
+        try {
+            setError(null);
+            const blob = await portfolioApi.exportEntries(format, accountId ? parseInt(accountId) : undefined);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `portfolio_entries.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : `Failed to export as ${format}`;
+            setError(message);
+        }
+    };
+
     const calculateTotalNetWorth = () => {
         if (isCombinedView && accountEntries.size > 0) {
-            // Sum up all account entries when in combined view
             let total = 0;
-            accountEntries.forEach((entries, accountId) => {
-                entries.forEach(entry => {
+            accountEntries.forEach((accEntries) => {
+                accEntries.forEach(entry => {
                     total += convertCurrency(entry.amount, entry.currency, selectedCurrency);
                 });
             });
             return total;
         } else {
-            // Use the entries state for individual account view
             return entries.reduce((total, entry) => {
                 return total + convertCurrency(entry.amount, entry.currency, selectedCurrency);
             }, 0);
         }
-    };// Calculate net worth for a specific account in the selected currency
-    const calculateAccountNetWorth = (accountId: number) => {
-        // Get entries for this specific account from our map
-        const accountSpecificEntries = accountEntries.get(accountId) || [];
-        
-        // Calculate net worth by converting all amounts to the selected currency
+    };
+    
+    const calculateAccountNetWorth = (id: number) => {
+        const accountSpecificEntries = accountEntries.get(id) || [];
         return accountSpecificEntries.reduce((total, entry) => {
             return total + convertCurrency(entry.amount, entry.currency, selectedCurrency);
         }, 0);
     };
 
-    // Navigate to account page when clicked
-    const handleAccountClick = (accountId: number) => {
-        navigate(`/portfolio/${accountId}`);
+    const handleAccountClick = (id: number) => {
+        navigate(`/portfolio/${id}`);
     };
 
     if (loading) {
@@ -194,7 +207,7 @@ export const PortfolioViewPage: React.FC = () => {
         );
     }
 
-    if (!account && !isCombinedView) {
+    if (!account && !isCombinedView && !loading) {
         return (
             <Box textAlign="center" p={3}>
                 <Typography color="error">Account not found</Typography>
@@ -213,8 +226,7 @@ export const PortfolioViewPage: React.FC = () => {
                 </Alert>
             )}
 
-            <Box sx={{ display: 'flex', gap: 3 }}>
-                {/* Left column */}
+            <Box sx={{ display: 'flex', gap: 3, mt: 2 }}>
                 <Box sx={{ width: '300px', flexShrink: 0, alignSelf: 'start' }}>
                     <NetWorthBox
                         totalNetWorth={calculateTotalNetWorth()}
@@ -231,9 +243,7 @@ export const PortfolioViewPage: React.FC = () => {
                     )}
                 </Box>
 
-                {/* Right column */}
                 <Box sx={{ flex: 1 }}>
-                    {/* Chart controls and chart */}
                     <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
                         <ChartControls
                             chartType={chartType}
@@ -260,15 +270,28 @@ export const PortfolioViewPage: React.FC = () => {
                         </Collapse>
                     </Paper>
 
-                    {/* Portfolio Entries Table */}
                     <Paper elevation={3} sx={{ p: 2 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Portfolio Entries
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
+                                {isCombinedView ? 'All Portfolio Entries' : (account ? `${account.name}'s Entries` : 'Portfolio Entries')}
+                            </Typography>
+                            <Box>
+                                <Tooltip title="Export as XLSX">
+                                    <IconButton onClick={() => handleExport('xlsx')} sx={{ mr: 0.5 }}>
+                                        <TableChartIcon sx={{ color: 'green' }} />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Export as CSV">
+                                    <IconButton onClick={() => handleExport('csv')}>
+                                        <DescriptionIcon sx={{ color: 'blue' }} />
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
+                        </Box>
                         <PortfolioTable
                             entries={entries}
                             showMemberName={isCombinedView}
-                            onEdit={(entry) => {
+                            onEdit={(entry: PortfolioEntry) => {
                                 setSelectedEntry(entry);
                                 setIsEditDialogOpen(true);
                             }}
@@ -278,7 +301,6 @@ export const PortfolioViewPage: React.FC = () => {
                 </Box>
             </Box>
 
-            {/* Dialogs */}
             <Dialog
                 open={isAddDialogOpen}
                 onClose={() => setIsAddDialogOpen(false)}
@@ -315,7 +337,7 @@ export const PortfolioViewPage: React.FC = () => {
                 ) : null}
             </Dialog>
 
-            <Zoom in={!isCombinedView}>
+            <Zoom in={!isCombinedView}> 
                 <Fab
                     color="primary"
                     aria-label="add entry"
