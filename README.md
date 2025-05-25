@@ -1,6 +1,8 @@
-# Getting Started with Create React App
+# Portfolio Tracker - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the frontend for the Portfolio Tracker application.
+
+It is built with React, TypeScript, and Material UI.
 
 ## Available Scripts
 
