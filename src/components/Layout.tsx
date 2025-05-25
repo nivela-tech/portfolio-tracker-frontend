@@ -160,7 +160,7 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode }) => {
         }}
       >
         <Toolbar /> {/* This adds space below the AppBar */}
-        <Container maxWidth="lg">
+        <Container maxWidth={false}>
           <Outlet />
         </Container>
       </Box>

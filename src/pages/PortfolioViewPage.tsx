@@ -219,7 +219,7 @@ export const PortfolioViewPage: React.FC = () => {
     }
 
     return (
-        <Container maxWidth="lg">
+        <Container maxWidth={false}>
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }}>
                     {error}
