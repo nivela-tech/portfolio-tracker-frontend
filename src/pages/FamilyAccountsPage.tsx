@@ -1,23 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { Paper, Typography, Box, Alert, Snackbar, CircularProgress, Button } from '@mui/material';
+import {
+    Paper,
+    Typography,
+    Box,
+    Alert,
+    Snackbar,
+    CircularProgress,
+    Button,
+    Container,
+    Fab,
+    Dialog,
+    Zoom
+} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import { AddAccountForm } from '../components/AddAccountForm';
 import { AccountsTable } from '../components/AccountsTable';
 import { useNavigate } from 'react-router-dom';
 import { PortfolioAccount } from '../types/portfolio';
 import { accountApi } from '../services/accountApi';
-import Fab from '@mui/material/Fab';
-import AddIcon from '@mui/icons-material/Add';
-import Dialog from '@mui/material/Dialog';
-import Zoom from '@mui/material/Zoom';
+import { useAuth } from '../components/Layout';
 
 export const FamilyAccountsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user, isLoading: authLoading, login } = useAuth();
+
   const [accounts, setAccounts] = useState<PortfolioAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const loadAccounts = async () => {
+    if (!user) {
+      setAccounts([]);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -25,10 +42,11 @@ export const FamilyAccountsPage: React.FC = () => {
       if (Array.isArray(data)) {
         setAccounts(data);
       } else {
-        throw new Error('Invalid response format');
+        console.error('Invalid response format for accounts:', data);
+        throw new Error('Invalid response format when fetching accounts.');
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred while fetching accounts.';
       setError(message);
       console.error('Failed to load accounts:', err);
       setAccounts([]);
@@ -38,15 +56,22 @@ export const FamilyAccountsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    loadAccounts();
-  }, []);
+    if (user) {
+        loadAccounts();
+    } else {
+        setAccounts([]);
+        setLoading(false);
+    }
+  }, [user]);
 
   const handleAccountSelect = (account: PortfolioAccount) => {
     navigate(`/portfolio/${account.id}`);
   };
 
   const handleAccountAdded = async () => {
-    await loadAccounts(); // Reload the accounts list after adding a new one
+    if (!user) return;
+    setIsAddDialogOpen(false);
+    await loadAccounts();
   };
 
   const handleCloseError = () => {
@@ -54,11 +79,36 @@ export const FamilyAccountsPage: React.FC = () => {
   };
 
   const handleRetry = () => {
+    if (!user) return;
     loadAccounts();
   };
 
+  if (authLoading) {
+    return (
+        <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+            <CircularProgress />
+        </Container>
+    );
+  }
+
+  if (!user) {
+    return (
+        <Container sx={{ textAlign: 'center', mt: 5 }}>
+            <Typography variant="h5" gutterBottom>
+                Manage Your Accounts
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+                Please sign in to view and manage your accounts.
+            </Typography>
+            <Button variant="contained" color="primary" onClick={login}>
+                Sign in with Google
+            </Button>
+        </Container>
+    );
+  }
+
   return (
-    <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+    <Paper elevation={3} sx={{ p: 3, mb: 4, position: 'relative' }}>
       <Typography variant="h5" component="h2" gutterBottom>
         Accounts
       </Typography>
@@ -86,47 +136,33 @@ export const FamilyAccountsPage: React.FC = () => {
         )}
       </Box>
 
-      {/* Add Account Dialog */}
       <Dialog
         open={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
         maxWidth="sm"
         fullWidth
       >
-        <AddAccountForm onAccountAdded={() => {
-          setIsAddDialogOpen(false);
-          handleAccountAdded();
-        }} />
+        <AddAccountForm onAccountAdded={handleAccountAdded} />
       </Dialog>
 
-      {/* Floating Action Button */}
-      <Zoom in={true}>
-        <Fab
-          color="primary"
-          aria-label="add account"
-          onClick={() => setIsAddDialogOpen(true)}
-          sx={{
-            position: 'fixed',
-            bottom: 16,
-            right: 16,
-            zIndex: 1000,
-            boxShadow: 6,
-            transition: 'transform 0.2s',
-            '&:hover': {
-              transform: 'scale(1.12)',
-              boxShadow: 12
-            }
-          }}
-        >
-          <AddIcon />
-        </Fab>
-      </Zoom>
+      {user && (
+        <Zoom in={true}>
+            <Fab 
+                color="primary" 
+                aria-label="add account" 
+                sx={{ position: 'fixed', bottom: 16, right: 16 }} 
+                onClick={() => setIsAddDialogOpen(true)}
+            >
+                <AddIcon />
+            </Fab>
+        </Zoom>
+      )}
 
-      <Snackbar 
-        open={!!error} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
         onClose={handleCloseError}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
           {error}

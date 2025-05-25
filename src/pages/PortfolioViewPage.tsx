@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Dispatch, SetStateAction } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Paper,
@@ -15,14 +15,7 @@ import {
     Tooltip,
     Fab,
     Zoom,
-    Select,
-    MenuItem,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemButton,
-    Divider,
-    Button // Ensured Button is imported
+    Button 
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -40,11 +33,14 @@ import { accountApi } from '../services/accountApi';
 import { NetWorthBox } from '../components/NetWorthBox';
 import { AccountList } from '../components/AccountList';
 import { ChartControls } from '../components/ChartControls';
-import { convertCurrency } from '../utils/currencyConverter'; // Ensured convertCurrency is imported
+import { convertCurrency } from '../utils/currencyConverter';
+import { useAuth } from '../components/Layout';
 
 export const PortfolioViewPage: React.FC = () => {
     const { accountId } = useParams<{ accountId: string }>();
     const navigate = useNavigate();
+    const { user, isLoading: authLoading, login } = useAuth(); // Corrected to isLoading
+
     const [account, setAccount] = useState<PortfolioAccount | null>(null);
     const [entries, setEntries] = useState<PortfolioEntry[]>([]);
     const [allAccounts, setAllAccounts] = useState<PortfolioAccount[]>([]);
@@ -61,6 +57,7 @@ export const PortfolioViewPage: React.FC = () => {
     const isCombinedView = !accountId;
 
     const loadData = async () => {
+        if (!user) return; // Don't load if no user
         try {
             setLoading(true);
             setError(null);
@@ -84,7 +81,8 @@ export const PortfolioViewPage: React.FC = () => {
         }
     };
 
-    const loadAllAccountsData = async () => { // Renamed to avoid conflict with component name
+    const loadAllAccountsData = async () => {
+        if (!user) return; // Don't load if no user
         try {
             const accountsData = await accountApi.getAllAccounts();
             setAllAccounts(accountsData);
@@ -105,19 +103,29 @@ export const PortfolioViewPage: React.FC = () => {
     };
 
     useEffect(() => {
-        loadData();
-        if (isCombinedView) {
-            loadAllAccountsData(); // Call renamed function
+        if (user) { // Only load data if user is authenticated
+            loadData();
+            if (isCombinedView) {
+                loadAllAccountsData(); // Call renamed function
+            }
         }
-    }, [accountId, isCombinedView]);
+    }, [accountId, isCombinedView, user]);
 
-    const handleAddEntry = async (entry: PortfolioEntry) => {
+    const handleAddEntry = async (entry: Omit<PortfolioEntry, 'id' | 'accountId' | 'userId'>) => {
+        if (!user) return;
         try {
             setError(null);
-            const newEntry = await portfolioApi.addEntry({ ...entry, accountId: parseInt(accountId!) });
-            setEntries([...entries, newEntry]);
+            // accountId should be part of the entry object if it's for a specific account
+            // The backend will associate the userId
+            const entryData = accountId 
+                ? { ...entry, accountId: parseInt(accountId) }
+                : entry; 
+            // Ensure type compatibility if accountId might be undefined in entryData
+            const newEntry = await portfolioApi.addEntry(entryData as Omit<PortfolioEntry, 'id' | 'userId'>);
+            setEntries(prevEntries => [...prevEntries, newEntry]);
             setIsAddDialogOpen(false);
             if (isCombinedView) loadAllAccountsData();
+            else loadData(); // Reload data for the current account view
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to add entry';
             setError(message);
@@ -125,6 +133,7 @@ export const PortfolioViewPage: React.FC = () => {
     };
 
     const handleEditEntry = async (entry: PortfolioEntry) => {
+        if (!user) return;
         try {
             setError(null);
             const updatedEntry = await portfolioApi.updateEntry(entry);
@@ -132,6 +141,7 @@ export const PortfolioViewPage: React.FC = () => {
             setIsEditDialogOpen(false);
             setSelectedEntry(null);
             if (isCombinedView) loadAllAccountsData();
+            else loadData(); // Reload data for the current account view
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update entry';
             setError(message);
@@ -139,11 +149,13 @@ export const PortfolioViewPage: React.FC = () => {
     };
 
     const handleDeleteEntry = async (entryId: number) => {
+        if (!user) return;
         try {
             setError(null);
             await portfolioApi.deleteEntry(entryId);
             setEntries(entries.filter(e => e.id !== entryId));
             if (isCombinedView) loadAllAccountsData();
+            else loadData(); // Reload data for the current account view
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete entry';
             setError(message);
@@ -155,6 +167,7 @@ export const PortfolioViewPage: React.FC = () => {
     };
 
     const handleExport = async (format: 'xlsx' | 'csv') => {
+        if (!user) return;
         try {
             setError(null);
             const blob = await portfolioApi.exportEntries(format, accountId ? parseInt(accountId) : undefined);
@@ -173,6 +186,7 @@ export const PortfolioViewPage: React.FC = () => {
     };
 
     const calculateTotalNetWorth = () => {
+        if (!user) return 0;
         if (isCombinedView && accountEntries.size > 0) {
             let total = 0;
             accountEntries.forEach((accEntries) => {
@@ -189,6 +203,7 @@ export const PortfolioViewPage: React.FC = () => {
     };
     
     const calculateAccountNetWorth = (id: number) => {
+        if (!user) return 0;
         const accountSpecificEntries = accountEntries.get(id) || [];
         return accountSpecificEntries.reduce((total, entry) => {
             return total + convertCurrency(entry.amount, entry.currency, selectedCurrency);
@@ -199,170 +214,166 @@ export const PortfolioViewPage: React.FC = () => {
         navigate(`/portfolio/${id}`);
     };
 
-    if (loading) {
+    if (authLoading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+            <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
                 <CircularProgress />
-            </Box>
+            </Container>
         );
     }
 
-    if (!account && !isCombinedView && !loading) {
+    if (!user) {
         return (
-            <Box textAlign="center" p={3}>
-                <Typography color="error">Account not found</Typography>
-                <Button variant="contained" onClick={() => navigate('/accounts')} sx={{ mt: 2 }}>
-                    Back to Accounts
+            <Container sx={{ textAlign: 'center', mt: 5 }}>
+                <Typography variant="h5" gutterBottom>
+                    Welcome to Your Portfolio Tracker
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 3 }}>
+                    Please sign in to manage and view your portfolios.
+                </Typography>
+                <Button variant="contained" color="primary" onClick={login}>
+                    Sign in with Google
                 </Button>
-            </Box>
+            </Container>
         );
     }
+
+    // Main content rendering starts here
+    const currentNetWorth = isCombinedView 
+        ? calculateTotalNetWorth() 
+        : (accountId ? calculateAccountNetWorth(parseInt(accountId)) : 0); // Ensure accountId is valid before parsing
 
     return (
-        <Container maxWidth={false}>
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
             {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
+                <Snackbar
+                    open={!!error}
+                    autoHideDuration={6000}
+                    onClose={handleCloseError}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                >
+                    <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+                        {error}
+                    </Alert>
+                </Snackbar>
             )}
 
-            <Box sx={{ display: 'flex', gap: 3, mt: 2 }}>
-                <Box sx={{ width: '300px', flexShrink: 0, alignSelf: 'start' }}>
-                    <NetWorthBox
-                        totalNetWorth={calculateTotalNetWorth()}
+            <Stack direction="row" spacing={2} alignItems="center" mb={2} justifyContent="space-between">
+                <Typography variant="h4" component="h1" gutterBottom sx={{ flexGrow: 1 }}>
+                    {isCombinedView ? 'Combined Portfolio' : (account ? `${account.name} Overview` : 'Loading Account...')}
+                </Typography>
+                {!isCombinedView && (
+                     <Tooltip title="View Combined Portfolio">
+                        <Button variant="outlined" onClick={() => navigate('/portfolio')}>
+                            View All Accounts
+                        </Button>
+                    </Tooltip>
+                )}
+            </Stack>
+
+            <NetWorthBox 
+                totalNetWorth={currentNetWorth} // Corrected prop name
+                selectedCurrency={selectedCurrency}
+                onCurrencyChange={setSelectedCurrency as (currency: string) => void} // Cast to expected type
+            />
+
+            {isCombinedView && (
+                <Box sx={{ mb: 3, mt:3 }}>
+                    <Typography variant="h5" gutterBottom>All Accounts</Typography>
+                    <AccountList 
+                        accounts={allAccounts}
+                        onAccountClick={handleAccountClick} 
                         selectedCurrency={selectedCurrency}
-                        onCurrencyChange={setSelectedCurrency}
+                        calculateAccountNetWorth={calculateAccountNetWorth}
                     />
-                    {isCombinedView && (
-                        <AccountList
-                            accounts={allAccounts}
-                            selectedCurrency={selectedCurrency}
-                            calculateAccountNetWorth={calculateAccountNetWorth}
-                            onAccountClick={handleAccountClick}
-                        />
+                </Box>
+            )}
+
+            <Paper sx={{ p: 2, mt: 3 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="h6">
+                        {isCombinedView ? 'All Entries' : `Entries for ${account?.name}`}
+                    </Typography>
+                    <Stack direction="row" spacing={1}>
+                        <Tooltip title={showGraph ? "Hide Chart" : "Show Chart"}>
+                            <IconButton onClick={() => setShowGraph(!showGraph)}>
+                                {showGraph ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Export as XLSX">
+                            <IconButton onClick={() => handleExport('xlsx')}>
+                                <DescriptionIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Export as CSV">
+                            <IconButton onClick={() => handleExport('csv')}>
+                                <TableChartIcon />
+                            </IconButton>
+                        </Tooltip>
+                    </Stack>
+                </Stack>
+
+                <Collapse in={showGraph}>
+                    {entries.length > 0 ? (
+                        <>
+                            <ChartControls 
+                                chartType={chartType} 
+                                setChartType={setChartType as (type: 'pie' | 'bar') => void} 
+                                groupBy={groupBy} 
+                                setGroupBy={setGroupBy as (group: 'type' | 'currency' | 'country' | 'source') => void} 
+                            />
+                            <PortfolioChart 
+                                entries={entries} 
+                                chartType={chartType} 
+                                groupBy={groupBy} 
+                                selectedCurrency={selectedCurrency} 
+                            />
+                        </>
+                    ) : (
+                        !loading && <Typography sx={{textAlign: 'center', my: 2}}>No entries to display in chart.</Typography>
                     )}
-                </Box>
+                </Collapse>
 
-                <Box sx={{ flex: 1 }}>
-                    <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
-                        <ChartControls
-                            chartType={chartType}
-                            groupBy={groupBy}
-                            setChartType={setChartType}
-                            setGroupBy={setGroupBy}
-                        />
-                        <Box>
-                            <Tooltip title={showGraph ? "Hide Chart" : "Show Chart"}>
-                                <IconButton onClick={() => setShowGraph(!showGraph)}>
-                                    {showGraph ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                </IconButton>
-                            </Tooltip>
-                        </Box>
-                        <Collapse in={showGraph}>
-                            <Box sx={{ mt: 2 }}>
-                                <PortfolioChart
-                                    entries={entries}
-                                    chartType={chartType}
-                                    groupBy={groupBy}
-                                    selectedCurrency={selectedCurrency}
-                                />
-                            </Box>
-                        </Collapse>
-                    </Paper>
+                <PortfolioTable 
+                    entries={entries} 
+                    onEdit={(entry) => { setSelectedEntry(entry); setIsEditDialogOpen(true); }} 
+                    onDelete={handleDeleteEntry} 
+                    selectedCurrency={selectedCurrency}
+                    loading={loading}
+                />
+            </Paper>
 
-                    <Paper elevation={3} sx={{ p: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
-                                {isCombinedView ? 'All Portfolio Entries' : (account ? `${account.name}'s Entries` : 'Portfolio Entries')}
-                            </Typography>
-                            <Box>
-                                <Tooltip title="Export as XLSX">
-                                    <IconButton onClick={() => handleExport('xlsx')} sx={{ mr: 0.5 }}>
-                                        <TableChartIcon sx={{ color: 'green' }} />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Export as CSV">
-                                    <IconButton onClick={() => handleExport('csv')}>
-                                        <DescriptionIcon sx={{ color: 'blue' }} />
-                                    </IconButton>
-                                </Tooltip>
-                            </Box>
-                        </Box>
-                        <PortfolioTable
-                            entries={entries}
-                            showMemberName={isCombinedView}
-                            onEdit={(entry: PortfolioEntry) => {
-                                setSelectedEntry(entry);
-                                setIsEditDialogOpen(true);
-                            }}
-                            onDelete={handleDeleteEntry}
-                        />
-                    </Paper>
-                </Box>
-            </Box>
+            {user && !isCombinedView && accountId && (
+                <Zoom in={true}>
+                    <Fab 
+                        color="primary" 
+                        aria-label="add entry" 
+                        sx={{ position: 'fixed', bottom: 16, right: 16 }} 
+                        onClick={() => setIsAddDialogOpen(true)}
+                    >
+                        <AddIcon />
+                    </Fab>
+                </Zoom>
+            )}
 
-            <Dialog
-                open={isAddDialogOpen}
-                onClose={() => setIsAddDialogOpen(false)}
-                maxWidth="md"
-                fullWidth
-            >
-                <AddEntryForm
-                    onSubmit={handleAddEntry}
-                    onCancel={() => setIsAddDialogOpen(false)}
-                    accountId={parseInt(accountId!)}
+            <Dialog open={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} maxWidth="sm" fullWidth>
+                <AddEntryForm 
+                    onAddEntry={handleAddEntry} 
+                    onCancel={() => setIsAddDialogOpen(false)} 
+                    accountId={accountId ? parseInt(accountId) : undefined} 
                 />
             </Dialog>
 
-            <Dialog
-                open={isEditDialogOpen}
-                onClose={() => {
-                    setIsEditDialogOpen(false);
-                    setSelectedEntry(null);
-                }}
-                maxWidth="md"
-                fullWidth
-            >
-                {selectedEntry ? (
-                    <AddEntryForm
-                        onSubmit={handleEditEntry}
-                        onCancel={() => {
-                            setIsEditDialogOpen(false);
-                            setSelectedEntry(null);
-                        }}
-                        accountId={selectedEntry.accountId}
-                        entry={selectedEntry}
-                        isEdit
+            <Dialog open={isEditDialogOpen} onClose={() => setIsEditDialogOpen(false)} maxWidth="sm" fullWidth>
+                {selectedEntry && (
+                    <AddEntryForm 
+                        onAddEntry={handleEditEntry} 
+                        onCancel={() => { setIsEditDialogOpen(false); setSelectedEntry(null); }} 
+                        existingEntry={selectedEntry} 
+                        accountId={selectedEntry.accountId} 
                     />
-                ) : null}
+                )}
             </Dialog>
-
-            <Zoom in={!isCombinedView}> 
-                <Fab
-                    color="primary"
-                    aria-label="add entry"
-                    onClick={() => setIsAddDialogOpen(true)}
-                    sx={{
-                        position: 'fixed',
-                        bottom: 16,
-                        right: 16,
-                        zIndex: 1000
-                    }}
-                >
-                    <AddIcon />
-                </Fab>
-            </Zoom>
-
-            <Snackbar
-                open={!!error}
-                autoHideDuration={6000}
-                onClose={handleCloseError}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-            >
-                <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
-                    {error}
-                </Alert>
-            </Snackbar>
         </Container>
     );
 };
