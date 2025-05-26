@@ -13,17 +13,17 @@ import { PortfolioEntry } from '../types/portfolio';
 import { PORTFOLIO_TYPES, CURRENCIES, COUNTRIES } from '../utils/constants';
 
 interface AddEntryFormProps {
-    onSubmit?: (entry: PortfolioEntry) => void;
-    onEntryAdded?: () => void;
+    onSubmit?: (entry: PortfolioEntry) => void; // Renamed from onAddEntry
+    onSuccess?: () => void; // Renamed from onEntryAdded
     onCancel?: () => void;
-    accountId: number;
+    accountId?: number; // Changed to optional
     entry?: PortfolioEntry | null;
     isEdit?: boolean;
 }
 
 export const AddEntryForm: React.FC<AddEntryFormProps> = ({
     onSubmit,
-    onEntryAdded,
+    onSuccess, // Renamed from onEntryAdded
     onCancel,
     accountId,
     entry,
@@ -61,8 +61,8 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
         if (onSubmit) {
             onSubmit(entryData);
         }
-        if (onEntryAdded) {
-            onEntryAdded();
+        if (onSuccess) { // Renamed from onEntryAdded
+            onSuccess();
         }
     };    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;

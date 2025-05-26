@@ -117,8 +117,13 @@ export const PortfolioViewPage: React.FC = () => {
             setError(null);
             // accountId should be part of the entry object if it's for a specific account
             // The backend will associate the userId
-            const entryData = accountId 
-                ? { ...entry, accountId: parseInt(accountId) }
+            const currentAccountId = accountId ? parseInt(accountId) : undefined;
+            if (currentAccountId === undefined && !isCombinedView) {
+                setError("Account ID is missing for adding an entry.");
+                return;
+            }
+            const entryData = currentAccountId !== undefined
+                ? { ...entry, accountId: currentAccountId }
                 : entry; 
             // Ensure type compatibility if accountId might be undefined in entryData
             const newEntry = await portfolioApi.addEntry(entryData as Omit<PortfolioEntry, 'id' | 'userId'>);
@@ -338,8 +343,8 @@ export const PortfolioViewPage: React.FC = () => {
                     entries={entries} 
                     onEdit={(entry) => { setSelectedEntry(entry); setIsEditDialogOpen(true); }} 
                     onDelete={handleDeleteEntry} 
-                    selectedCurrency={selectedCurrency}
-                    loading={loading}
+                    selectedCurrency={selectedCurrency} // This was the error, prop didn't exist
+                    loading={loading} // Added loading prop
                 />
             </Paper>
 
@@ -358,7 +363,8 @@ export const PortfolioViewPage: React.FC = () => {
 
             <Dialog open={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} maxWidth="sm" fullWidth>
                 <AddEntryForm 
-                    onAddEntry={handleAddEntry} 
+                    onSubmit={handleAddEntry} // Changed from onAddEntry to onSubmit
+                    onSuccess={() => setIsAddDialogOpen(false)} // Added onSuccess (previously part of onCancel)
                     onCancel={() => setIsAddDialogOpen(false)} 
                     accountId={accountId ? parseInt(accountId) : undefined} 
                 />
@@ -367,9 +373,11 @@ export const PortfolioViewPage: React.FC = () => {
             <Dialog open={isEditDialogOpen} onClose={() => setIsEditDialogOpen(false)} maxWidth="sm" fullWidth>
                 {selectedEntry && (
                     <AddEntryForm 
-                        onAddEntry={handleEditEntry} 
+                        onSubmit={handleEditEntry} // Changed from onAddEntry to onSubmit
+                        onSuccess={() => { setIsEditDialogOpen(false); setSelectedEntry(null); }} // Added onSuccess
                         onCancel={() => { setIsEditDialogOpen(false); setSelectedEntry(null); }} 
-                        existingEntry={selectedEntry} 
+                        entry={selectedEntry} // Renamed from existingEntry to entry
+                        isEdit={true} // Explicitly set isEdit
                         accountId={selectedEntry.accountId} 
                     />
                 )}

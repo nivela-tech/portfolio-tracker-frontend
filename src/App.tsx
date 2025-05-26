@@ -56,6 +56,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode} />}>
             <Route index element={<PortfolioViewPage />} />
+            <Route path="portfolio" element={<PortfolioViewPage />} />
             <Route path="accounts" element={<FamilyAccountsPage />} />
             <Route path="portfolio/:accountId" element={<PortfolioViewPage />} />
             <Route path="add-entry/:accountId" element={<AddEntryPage />} />

@@ -61,7 +61,7 @@ export const AddEntryPage: React.FC = () => {
         Add New Entry to Account
       </Typography>
       <AddEntryForm 
-        onEntryAdded={handleEntryAdded} 
+        onSuccess={handleEntryAdded} 
         accountId={parseInt(accountId)} 
       />
     </Paper>

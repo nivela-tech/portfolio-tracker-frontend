@@ -18,13 +18,17 @@ interface PortfolioTableProps {
     showMemberName?: boolean;
     onEdit: (entry: PortfolioEntry) => void;
     onDelete: (entryId: number) => void;
+    selectedCurrency: string; // Added selectedCurrency
+    loading?: boolean; // Added loading
 }
 
 export const PortfolioTable: React.FC<PortfolioTableProps> = ({ 
     entries, 
     showMemberName = false,
     onEdit, 
-    onDelete 
+    onDelete,
+    selectedCurrency, // Added selectedCurrency
+    loading // Added loading
 }) => {
     return (
         <TableContainer component={Paper}>
