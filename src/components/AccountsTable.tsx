@@ -7,17 +7,20 @@ import {
     TableHead,
     TableRow,
     Paper,
-    Button
+    Button,
+    IconButton,
+    Tooltip
 } from '@mui/material';
-import { Visibility as ViewIcon } from '@mui/icons-material';
+import { Visibility as ViewIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { PortfolioAccount } from '../types/portfolio';
 
 interface AccountsTableProps {
     accounts: PortfolioAccount[];
-    onSelect: (account: PortfolioAccount) => void;
+    onAccountClick: (account: PortfolioAccount) => void; // Renamed from onSelect to onAccountClick
+    onDeleteAccount?: (account: PortfolioAccount) => void; // New prop for delete functionality
 }
 
-export const AccountsTable: React.FC<AccountsTableProps> = ({ accounts, onSelect }) => {
+export const AccountsTable: React.FC<AccountsTableProps> = ({ accounts, onAccountClick, onDeleteAccount }) => {
     return (
         <TableContainer component={Paper}>
             <Table>
@@ -39,12 +42,24 @@ export const AccountsTable: React.FC<AccountsTableProps> = ({ accounts, onSelect
                             <TableCell align="center">
                                 <Button
                                     startIcon={<ViewIcon />}
-                                    onClick={() => onSelect(account)}
+                                    onClick={() => onAccountClick(account)}
                                     variant="contained"
                                     color="primary"
+                                    sx={{ mr: 1 }}
                                 >
                                     View Portfolio
                                 </Button>
+                                {onDeleteAccount && (
+                                    <Tooltip title="Delete Account">
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => onDeleteAccount(account)}
+                                            size="small"
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
                             </TableCell>
                         </TableRow>
                     ))}

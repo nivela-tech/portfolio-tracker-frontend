@@ -29,9 +29,15 @@ apiClient.interceptors.request.use(config => {
             if (!config.headers) {
                 config.headers = {} as AxiosRequestHeaders;
             }
+            // Set both formats of CSRF token header to ensure compatibility
             (config.headers as AxiosRequestHeaders)['X-XSRF-TOKEN'] = csrfToken;
+            (config.headers as AxiosRequestHeaders)['X-CSRF-TOKEN'] = csrfToken;
+        } else {
+            console.warn('CSRF token not found in cookies. This might cause 403 Forbidden errors.');
         }
     }
+    // Log URL being requested for debugging
+    console.log(`Portfolio API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     return config;
 });
 
@@ -55,11 +61,11 @@ apiClient.interceptors.response.use(
     }
 );
 
-export const portfolioApi = {
-    getAllEntries: async (accountId?: number): Promise<PortfolioEntry[]> => {
+export const portfolioApi = {    getAllEntries: async (accountId?: number): Promise<PortfolioEntry[]> => {
         try {
             const params = accountId ? { accountId } : {};
-            const response = await apiClient.get<PortfolioEntry[]>('/', { params });
+            // Fix: remove trailing slash to prevent double slashes in URL
+            const response = await apiClient.get<PortfolioEntry[]>('', { params });
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
@@ -75,15 +81,29 @@ export const portfolioApi = {
             const axiosError = error as AxiosError;
             throw new Error(axiosError.response?.data as string || 'Failed to fetch combined portfolio entries');
         }
-    },
-
-    addEntry: async (entry: Omit<PortfolioEntry, 'id' | 'userId'>): Promise<PortfolioEntry> => {
+    },    addEntry: async (entry: Omit<PortfolioEntry, 'id' | 'userId'>): Promise<PortfolioEntry> => {
         try {
-            const response = await apiClient.post<PortfolioEntry>('/', entry);
+            // Log the request being made for debugging
+            console.log('Adding portfolio entry with data:', entry);
+            // Fix: remove trailing slash to prevent double slashes in URL
+            const response = await apiClient.post<PortfolioEntry>('', entry);
+            console.log('Portfolio entry added successfully:', response.data);
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
-            throw new Error(axiosError.response?.data as string || 'Failed to add portfolio entry');
+            // Enhanced error logging
+            console.error('Portfolio entry creation failed:', {
+                status: axiosError.response?.status,
+                statusText: axiosError.response?.statusText,
+                data: axiosError.response?.data,
+                headers: axiosError.response?.headers
+            });
+            
+            const errorMessage = typeof axiosError.response?.data === 'string' 
+                ? axiosError.response.data 
+                : (axiosError.response?.data as any)?.message || 'Failed to add portfolio entry';
+            
+            throw new Error(errorMessage);
         }
     },
 

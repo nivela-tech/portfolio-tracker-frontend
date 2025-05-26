@@ -7,7 +7,7 @@ import { useAuth } from '../components/Layout';
 export const AddEntryPage: React.FC = () => {
   const { accountId } = useParams<{ accountId: string }>();
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, login } = useAuth();
+  const { user, authLoading, login } = useAuth(); // Corrected: authLoading is directly from useAuth now
 
   const handleEntryAdded = () => {
     if (accountId) {

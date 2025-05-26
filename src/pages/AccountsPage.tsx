@@ -24,7 +24,7 @@ import { PortfolioAccount } from '../types/portfolio';
 import { accountApi } from '../services/accountApi';
 import { useAuth } from '../components/Layout';
 
-export const FamilyAccountsPage: React.FC = () => {
+export const AccountsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, authLoading, login } = useAuth(); // Changed isLoading to authLoading
   const [accounts, setAccounts] = useState<PortfolioAccount[]>([]);

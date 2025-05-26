@@ -39,7 +39,7 @@ import { useAuth } from '../components/Layout';
 export const PortfolioViewPage: React.FC = () => {
     const { accountId } = useParams<{ accountId: string }>();
     const navigate = useNavigate();
-    const { user, isLoading: authLoading, login } = useAuth(); // Corrected to isLoading
+    const { user, authLoading, login } = useAuth(); // Changed isLoading to authLoading
 
     const [account, setAccount] = useState<PortfolioAccount | null>(null);
     const [entries, setEntries] = useState<PortfolioEntry[]>([]);
@@ -55,6 +55,16 @@ export const PortfolioViewPage: React.FC = () => {
     const [selectedCurrency, setSelectedCurrency] = useState('SGD');
     const [showGraph, setShowGraph] = useState(true);
     const isCombinedView = !accountId;
+
+    const handleApiError = (err: unknown): string => {
+        if (err instanceof Error) {
+            return err.message;
+        }
+        if (typeof err === 'object' && err !== null) {
+            return JSON.stringify(err);
+        }
+        return 'An unexpected error occurred';
+    };
 
     const loadData = async () => {
         if (!user) return; // Don't load if no user
@@ -74,8 +84,7 @@ export const PortfolioViewPage: React.FC = () => {
                 setAccount(accountData);
             }
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-            setError(message);
+            setError(handleApiError(err));
         } finally {
             setLoading(false);
         }
@@ -92,13 +101,12 @@ export const PortfolioViewPage: React.FC = () => {
                     const accEntries = await portfolioApi.getAllEntries(acc.id);
                     currentAccountEntries.set(acc.id, accEntries);
                 } catch (err) {
-                    console.error(`Failed to load entries for account ${acc.id}:`, err);
+                    console.error(`Failed to load entries for account ${acc.id}:`, handleApiError(err));
                 }
             }
             setAccountEntries(currentAccountEntries);
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to load accounts';
-            setError(message);
+            setError(handleApiError(err));
         }
     };
 
@@ -219,6 +227,82 @@ export const PortfolioViewPage: React.FC = () => {
         navigate(`/portfolio/${id}`);
     };
 
+    const handleEdit = (entry: PortfolioEntry) => {
+        console.log('Edit entry:', entry);
+        // Add edit logic here
+    };
+
+    const handleDelete = (entryId: number) => {
+        console.log('Delete entry ID:', entryId);
+        // Add delete logic here
+    };
+
+    const renderContent = () => {
+        if (loading) {
+            return <CircularProgress />;
+        }
+
+        if (error) {
+            return <Alert severity="error">{error}</Alert>;
+        }        if (entries.length === 0) {
+            return (
+                <Box textAlign="center" mt={3}>
+                    <Typography variant="h6">No portfolio entries available.</Typography>
+                    {!isCombinedView && (
+                        <>
+                            <Typography variant="body1" sx={{ mb: 2 }}>
+                                Add your first entry using the button below.
+                            </Typography>
+                            <Button variant="contained" color="primary" onClick={() => setIsAddDialogOpen(true)}>
+                                Add Entry
+                            </Button>
+                        </>
+                    )}
+                </Box>
+            );
+        }
+
+        return (
+            <>
+                <PortfolioTable 
+                    entries={entries} 
+                    onEdit={handleEdit} 
+                    onDelete={handleDelete} 
+                    selectedCurrency={selectedCurrency} 
+                />
+                {showGraph && <PortfolioChart entries={entries} chartType={chartType} groupBy={groupBy} selectedCurrency={selectedCurrency} />}
+            </>
+        );
+    };
+
+    const renderAccounts = () => {
+        if (loading) {
+            return <CircularProgress />;
+        }
+
+        if (allAccounts.length === 0) {            return (
+                <Box textAlign="center" mt={3}>
+                    <Typography variant="h6">No accounts found.</Typography>
+                    <Typography variant="body1" sx={{ mb: 2 }}>
+                        You need to create an account first.
+                    </Typography>
+                    <Button variant="contained" color="primary" onClick={() => navigate('/accounts')}>
+                        Go to Accounts Page
+                    </Button>
+                </Box>
+            );
+        }
+
+        return (
+            <AccountList 
+                accounts={allAccounts} 
+                onAccountClick={handleAccountClick} 
+                selectedCurrency={selectedCurrency} 
+                calculateAccountNetWorth={calculateAccountNetWorth} 
+            />
+        );
+    };
+
     if (authLoading) {
         return (
             <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
@@ -265,7 +349,7 @@ export const PortfolioViewPage: React.FC = () => {
 
             <Stack direction="row" spacing={2} alignItems="center" mb={2} justifyContent="space-between">
                 <Typography variant="h4" component="h1" gutterBottom sx={{ flexGrow: 1 }}>
-                    {isCombinedView ? 'Combined Portfolio' : (account ? `${account.name} Overview` : 'Loading Account...')}
+                    {isCombinedView ? 'Portfolio Overview' : (account ? `${account.name} Overview` : 'Loading Account...')}
                 </Typography>
                 {!isCombinedView && (
                      <Tooltip title="View Combined Portfolio">
@@ -285,12 +369,7 @@ export const PortfolioViewPage: React.FC = () => {
             {isCombinedView && (
                 <Box sx={{ mb: 3, mt:3 }}>
                     <Typography variant="h5" gutterBottom>All Accounts</Typography>
-                    <AccountList 
-                        accounts={allAccounts}
-                        onAccountClick={handleAccountClick} 
-                        selectedCurrency={selectedCurrency}
-                        calculateAccountNetWorth={calculateAccountNetWorth}
-                    />
+                    {renderAccounts()}
                 </Box>
             )}
 
@@ -316,9 +395,7 @@ export const PortfolioViewPage: React.FC = () => {
                             </IconButton>
                         </Tooltip>
                     </Stack>
-                </Stack>
-
-                <Collapse in={showGraph}>
+                </Stack>                <Collapse in={showGraph}>
                     {entries.length > 0 ? (
                         <>
                             <ChartControls 
@@ -335,7 +412,20 @@ export const PortfolioViewPage: React.FC = () => {
                             />
                         </>
                     ) : (
-                        !loading && <Typography sx={{textAlign: 'center', my: 2}}>No entries to display in chart.</Typography>
+                        !loading && 
+                        <Box textAlign="center" my={2}>
+                            <Typography variant="body1" mb={1}>No entries to display in chart.</Typography>
+                            {!isCombinedView && (
+                                <Button 
+                                    variant="outlined" 
+                                    color="primary" 
+                                    size="small"
+                                    onClick={() => setIsAddDialogOpen(true)}
+                                >
+                                    Add First Entry
+                                </Button>
+                            )}
+                        </Box>
                     )}
                 </Collapse>
 

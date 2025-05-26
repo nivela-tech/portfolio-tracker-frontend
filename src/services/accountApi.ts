@@ -29,7 +29,11 @@ apiClient.interceptors.request.use(config => {
             if (!config.headers) {
                 config.headers = {} as AxiosRequestHeaders;
             }
+            // Set both formats of CSRF token header to ensure compatibility
             (config.headers as AxiosRequestHeaders)['X-XSRF-TOKEN'] = csrfToken;
+            (config.headers as AxiosRequestHeaders)['X-CSRF-TOKEN'] = csrfToken;
+        } else {
+            console.warn('CSRF token not found in cookies. This might cause 403 Forbidden errors.');
         }
     }
     return config;
@@ -55,20 +59,39 @@ apiClient.interceptors.response.use(
     }
 );
 
-export const accountApi = {
-    createAccount: async (account: Omit<PortfolioAccount, 'id' | 'userId'>): Promise<PortfolioAccount> => {
+export const accountApi = {    createAccount: async (account: Omit<PortfolioAccount, 'id' | 'userId'>): Promise<PortfolioAccount> => {
         try {
-            const response = await apiClient.post<PortfolioAccount>('/', account);
+            // Log the request being made for debugging
+            console.log('Creating account with data:', account);
+            // Extra debug logging for cookies and CSRF
+            console.log('CSRF token from cookie:', getCsrfToken());
+            
+            // Fix: remove the trailing slash to prevent double slashes
+            const response = await apiClient.post<PortfolioAccount>('', account);
+            console.log('Account created successfully:', response.data);
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
-            throw new Error(axiosError.response?.data as string || 'Failed to create account');
+            // Enhanced error logging
+            console.error('Account creation failed:', {
+                status: axiosError.response?.status,
+                statusText: axiosError.response?.statusText,
+                data: axiosError.response?.data,
+                headers: axiosError.response?.headers
+            });
+            
+            // Format error message
+            const errorMessage = typeof axiosError.response?.data === 'string' 
+                ? axiosError.response.data 
+                : (axiosError.response?.data as any)?.message || 'Failed to create account';
+            
+            throw new Error(errorMessage);
         }
     },
 
     getAllAccounts: async (): Promise<PortfolioAccount[]> => {
         try {
-            const response = await apiClient.get<PortfolioAccount[]>('/');
+            const response = await apiClient.get<PortfolioAccount[]>('/'); // Corrected endpoint to be relative to baseURL
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
@@ -94,14 +117,28 @@ export const accountApi = {
             const axiosError = error as AxiosError;
             throw new Error(axiosError.response?.data as string || `Failed to update account ${id}`);
         }
-    },
-
-    deleteAccount: async (id: number): Promise<void> => {
+    },    deleteAccount: async (id: number): Promise<void> => {
         try {
+            // Log the delete operation for debugging
+            console.log(`Deleting account with ID: ${id}`);
+            
             await apiClient.delete(`/${id}`);
+            console.log(`Successfully deleted account with ID: ${id}`);
         } catch (error) {
             const axiosError = error as AxiosError;
-            throw new Error(axiosError.response?.data as string || `Failed to delete account ${id}`);
+            // Enhanced error logging
+            console.error('Account deletion failed:', {
+                id,
+                status: axiosError.response?.status,
+                statusText: axiosError.response?.statusText,
+                data: axiosError.response?.data
+            });
+            
+            const errorMessage = typeof axiosError.response?.data === 'string' 
+                ? axiosError.response.data 
+                : (axiosError.response?.data as any)?.message || `Failed to delete account ${id}`;
+            
+            throw new Error(errorMessage);
         }
     }
 };

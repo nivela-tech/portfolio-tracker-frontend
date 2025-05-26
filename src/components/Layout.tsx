@@ -15,6 +15,8 @@ import {
   useMediaQuery,
   Stack,
   Button,
+  CircularProgress,
+  Avatar,
 } from '@mui/material';
 import { accountApi } from '../services/accountApi';
 import { PortfolioAccount } from '../types/portfolio';
@@ -23,23 +25,29 @@ import {
   People as PeopleIcon,
   Brightness4 as Brightness4Icon,
   Brightness7 as Brightness7Icon,
+  Dashboard as DashboardIcon, // Added for Portfolio
+  AccountBalanceWallet as AccountBalanceWalletIcon, // Added for Accounts
+  ExitToApp as ExitToAppIcon, // Added for Logout
+  Login as LoginIcon, // Added for Login
 } from '@mui/icons-material';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet, Link as RouterLink } from 'react-router-dom';
 
 // Define User type for frontend
 interface User {
-  id: number;
+  id: string; // Changed to string to match typical provider IDs
   name: string;
   email: string;
-  provider: string;
+  imageUrl?: string; // Added imageUrl
+  // provider: string; // Removed provider as it's less used directly in UI
 }
 
 // Create AuthContext
 interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
+  isAuthenticated: boolean; // Renamed from user !== null for clarity
+  authLoading: boolean; // Renamed from isLoading for clarity
   login: () => void;
-  logout: () => void;
+  logout: () => Promise<void>; // Changed to Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,15 +76,21 @@ const getCookie = (name: string): string | null => {
 // AuthProvider Component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
+      setAuthLoading(true);
       try {
         const response = await fetch('/api/user/me');
         if (response.ok) {
           const userData = await response.json();
-          setUser(userData);
+          if (userData && userData.id) { // Check if userData is not null and has id
+            setUser(userData);
+          } else {
+            setUser(null);
+          }
         } else {
           setUser(null);
         }
@@ -84,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error fetching user:', error);
         setUser(null);
       } finally {
-        setIsLoading(false);
+        setAuthLoading(false);
       }
     };
     fetchUser();
@@ -110,22 +124,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null); 
 
       if (response.ok) {
-        if (!response.redirected) { 
-          window.location.href = 'http://localhost:3000/'; 
+        // Check if the response is a redirect or if the URL changed
+        if (response.redirected || response.url !== window.location.href) {
+          // If redirected by backend, let the browser handle it.
+          // If not, but URL implies logout (e.g. to landing), ensure frontend state is clear.
+          if (response.url.includes('logout=true') || response.url === 'http://localhost:3000/') {
+            navigate('/');
+          } else {
+            // If backend logout didn't redirect to landing, force it.
+            window.location.href = 'http://localhost:3000/';
+          }
+        } else {
+          // If no redirect from backend, manually navigate
+          navigate('/');
         }
       } else {
         console.error('Logout request failed:', response.status, response.statusText);
-        window.location.href = 'http://localhost:3000/';
+        navigate('/'); // Fallback to landing page
       }
     } catch (error) {
       console.error('Logout failed:', error);
       setUser(null); 
-      window.location.href = 'http://localhost:3000/';
+      navigate('/'); // Fallback to landing page
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, authLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -137,72 +162,60 @@ const drawerWidth = 240;
 interface LayoutProps {
   toggleTheme: () => void;
   isDarkMode: boolean;
+  children: React.ReactNode; // Added children prop for Outlet
 }
 
-export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode }) => {
+export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [account, setAccount] = React.useState<PortfolioAccount | null>(null);
-  const { user, login, logout, isLoading } = useAuth();
-
-  React.useEffect(() => {
-    if (user) {
-        const fetchAccount = async () => {
-            const accountId = location.pathname.match(/\/portfolio\/(\d+)/)?.[1];
-            if (accountId) {
-                try {
-                    const accountData = await accountApi.getAccountById(parseInt(accountId));
-                    setAccount(accountData);
-                } catch (error) {
-                    console.error('Error fetching account:', error);
-                }
-            } else {
-                setAccount(null);
-            }
-        };
-        fetchAccount();
-    } else {
-        setAccount(null); 
-    }
-  }, [location.pathname, user]);
+  // const [account, setAccount] = React.useState<PortfolioAccount | null>(null); // Account fetching might be page-specific
+  const { user, logout, authLoading, isAuthenticated } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
-  const menuItems = [
-    { text: 'Portfolio', icon: <PeopleIcon />, path: '/' },
-    { text: 'Accounts', icon: <PeopleIcon />, path: '/accounts' },
-  ];
+
+  // Redirect to landing if not authenticated and not loading
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated && location.pathname !== '/') {
+      navigate('/');
+    }
+  }, [authLoading, isAuthenticated, navigate, location.pathname]);
+
+  if (authLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // If not authenticated, Layout should not render its main content.
+  // This case should ideally be handled by ProtectedRoute in App.tsx
+  // but as a safeguard:
+  if (!isAuthenticated) {
+     // This will be handled by ProtectedRoute, so this part of Layout might not be strictly necessary
+     // if all routes using Layout are protected.
+    return null; 
+  }
 
   const drawer = (
-    <div>
-      <Toolbar />
+    <Box>
+      <Toolbar /> 
       <List>
-        {menuItems.map((item) => (
-          <ListItemButton
-            key={item.text}
-            onClick={() => {
-              navigate(item.path);
-              if (isMobile) {
-                handleDrawerToggle();
-              }
-            }}
-            selected={location.pathname === item.path}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItemButton>
-        ))}
+        <ListItemButton component={RouterLink} to="/portfolio" selected={location.pathname.startsWith('/portfolio')}>
+          <ListItemIcon><DashboardIcon /></ListItemIcon>
+          <ListItemText primary="Portfolio" />
+        </ListItemButton>        <ListItemButton component={RouterLink} to="/accounts" selected={location.pathname.startsWith('/accounts')}>
+          <ListItemIcon><AccountBalanceWalletIcon /></ListItemIcon>
+          <ListItemText primary="Accounts" />
+        </ListItemButton>
       </List>
-    </div>
+    </Box>
   );
-
-  if (isLoading) {
-    return <Container><Typography>Loading user...</Typography></Container>;
-  }
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -226,56 +239,53 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode }) => {
             </IconButton>
           )}
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {account ? account.name : 'Portfolio Tracker'}
+            Portfolio Tracker
           </Typography>
           <IconButton sx={{ ml: 1 }} onClick={toggleTheme} color="inherit">
             {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
-          {user ? (
-            <>
-              <Typography sx={{ ml: 2 }}>{user.name}</Typography>
-              <Button color="inherit" onClick={logout} sx={{ ml: 1 }}>Logout</Button>
-            </>
-          ) : (
-            <Button color="inherit" onClick={login}>Sign in with Google</Button>
+          {user && (
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: 2 }}>
+              {user.imageUrl && <Avatar alt={user.name} src={user.imageUrl} sx={{ width: 32, height: 32 }} />}
+              <Typography variant="subtitle1">{user.name}</Typography>
+              <Button color="inherit" onClick={logout} startIcon={<ExitToAppIcon />}>
+                Logout
+              </Button>
+            </Stack>
           )}
         </Toolbar>
       </AppBar>
-
       <Box
         component="nav"
         sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+        aria-label="mailbox folders"
       >
         <Drawer
-          variant={isMobile ? 'temporary' : 'permanent'}
+          variant={isMobile ? "temporary" : "permanent"}
           open={isMobile ? mobileOpen : true}
           onClose={handleDrawerToggle}
           ModalProps={{
-            keepMounted: true, 
+            keepMounted: true, // Better open performance on mobile.
           }}
           sx={{
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: drawerWidth,
-            },
+            display: { xs: 'block', md: 'block' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
           }}
         >
           {drawer}
         </Drawer>
       </Box>
-
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
           width: { md: `calc(100% - ${drawerWidth}px)` },
+          marginTop: '64px', // AppBar height
         }}
       >
-        <Toolbar /> 
-        <Container maxWidth={false}>
-          <Outlet />
-        </Container>
+        {/* <Toolbar />  This was causing double spacing, AppBar is fixed */} 
+        {children} {/* Render children passed from App.tsx (Outlet) */}
       </Box>
     </Box>
   );

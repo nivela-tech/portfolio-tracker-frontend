@@ -1,22 +1,13 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, CssBaseline, IconButton } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
-import { Layout } from './components/Layout';
-import { FamilyAccountsPage } from './pages/FamilyAccountsPage';
+import { Layout, AuthProvider, useAuth } from './components/Layout'; // Import AuthProvider
+import { AccountsPage } from './pages/AccountsPage';
 import { PortfolioViewPage } from './pages/PortfolioViewPage';
 import { AddEntryPage } from './pages/AddEntryPage';
-import { AddEntryForm } from './components/AddEntryForm';
-import { PortfolioChart } from './components/PortfolioChart';
-import { PortfolioTable } from './components/PortfolioTable';
-import { AddAccountForm } from './components/AddAccountForm';
-import { AccountsTable } from './components/AccountsTable';
-import { portfolioApi } from './services/portfolioApi';
-import { accountApi } from './services/accountApi';
-import { PortfolioEntry, PortfolioAccount } from './types/portfolio';
+import LandingPage from './pages/LandingPage'; // Import LandingPage
 import './App.css';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 const lightTheme = createTheme({
   palette: {
@@ -42,6 +33,21 @@ const darkTheme = createTheme({
   },
 });
 
+// ProtectedRoute component
+const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+  const { isAuthenticated, authLoading } = useAuth(); // Use renamed properties
+
+  if (authLoading) {
+    return <div>Loading...</div>; // Or a spinner component
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 export function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -53,15 +59,51 @@ export function App() {
     <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
       <CssBaseline />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode} />}>
-            <Route index element={<PortfolioViewPage />} />
-            <Route path="portfolio" element={<PortfolioViewPage />} />
-            <Route path="accounts" element={<FamilyAccountsPage />} />
-            <Route path="portfolio/:accountId" element={<PortfolioViewPage />} />
-            <Route path="add-entry/:accountId" element={<AddEntryPage />} />
-          </Route>
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route
+              path="/portfolio"
+              element={
+                <ProtectedRoute>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode}>
+                    <PortfolioViewPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />            <Route
+              path="/accounts"
+              element={
+                <ProtectedRoute>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode}>
+                    <AccountsPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/portfolio/:accountId"
+              element={
+                <ProtectedRoute>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode}>
+                    <PortfolioViewPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/add-entry/:accountId"
+              element={
+                <ProtectedRoute>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode}>
+                    <AddEntryPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            {/* Add other protected routes similarly */}
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
   );
