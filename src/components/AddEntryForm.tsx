@@ -135,7 +135,7 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
                                 name="country"
                                 select
                                 label="Country"
-                                value={formData.country || 'Singapore'}
+                                value={formData.country || 'United States'} // Default to United States for display
                                 onChange={handleChange}
                                 fullWidth
                                 required

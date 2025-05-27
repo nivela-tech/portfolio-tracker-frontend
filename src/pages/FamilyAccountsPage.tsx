@@ -191,7 +191,7 @@ export const FamilyAccountsPage: React.FC = () => {
         maxWidth="sm"
         fullWidth
       >
-        <AddAccountForm onAccountAdded={handleAccountAdded} />
+        <AddAccountForm onAccountAdded={handleAccountAdded} onCancel={() => setIsAddDialogOpen(false)} />
       </Dialog>
 
       {user && (
