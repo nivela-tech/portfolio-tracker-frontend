@@ -99,46 +99,32 @@ export const accountApi = {    createAccount: async (account: Omit<PortfolioAcco
         }
     },
 
-    getAccountById: async (id: number): Promise<PortfolioAccount> => {
+    getAccountById: async (id: string): Promise<PortfolioAccount> => { // Changed id type to string
         try {
             const response = await apiClient.get<PortfolioAccount>(`/${id}`);
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
-            throw new Error(axiosError.response?.data as string || `Failed to fetch account ${id}`);
+            throw new Error(axiosError.response?.data as string || 'Failed to fetch account');
         }
     },
 
-    updateAccount: async (id: number, account: Partial<Omit<PortfolioAccount, 'id' | 'userId'>>): Promise<PortfolioAccount> => {
+    updateAccount: async (id: string, account: Partial<PortfolioAccount>): Promise<PortfolioAccount> => { // Changed id type to string
         try {
             const response = await apiClient.put<PortfolioAccount>(`/${id}`, account);
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
-            throw new Error(axiosError.response?.data as string || `Failed to update account ${id}`);
+            throw new Error(axiosError.response?.data as string || 'Failed to update account');
         }
-    },    deleteAccount: async (id: number): Promise<void> => {
+    },
+
+    deleteAccount: async (id: string): Promise<void> => { // Changed id type to string
         try {
-            // Log the delete operation for debugging
-            console.log(`Deleting account with ID: ${id}`);
-            
             await apiClient.delete(`/${id}`);
-            console.log(`Successfully deleted account with ID: ${id}`);
         } catch (error) {
             const axiosError = error as AxiosError;
-            // Enhanced error logging
-            console.error('Account deletion failed:', {
-                id,
-                status: axiosError.response?.status,
-                statusText: axiosError.response?.statusText,
-                data: axiosError.response?.data
-            });
-            
-            const errorMessage = typeof axiosError.response?.data === 'string' 
-                ? axiosError.response.data 
-                : (axiosError.response?.data as any)?.message || `Failed to delete account ${id}`;
-            
-            throw new Error(errorMessage);
+            throw new Error(axiosError.response?.data as string || 'Failed to delete account');
         }
     }
 };

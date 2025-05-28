@@ -1,8 +1,8 @@
 import { PortfolioType, Currency, Country } from '../utils/constants';
 
 export interface PortfolioEntry {
-    id: number;
-    accountId: number;
+    id: string; // Changed from number to string
+    accountId: string; // Changed from number to string
     dateAdded: string;
     type: PortfolioType;
     currency: Currency;
@@ -14,7 +14,7 @@ export interface PortfolioEntry {
 }
 
 export interface PortfolioAccount {
-    id: number;
+    id: string; // Changed from number to string
     name: string;
     relationship: string;
     entries?: PortfolioEntry[];

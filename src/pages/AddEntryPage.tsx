@@ -62,7 +62,7 @@ export const AddEntryPage: React.FC = () => {
       </Typography>
       <AddEntryForm 
         onSuccess={handleEntryAdded} 
-        accountId={parseInt(accountId)} 
+        accountId={accountId} // Ensure accountId is passed as string? | undefined
       />
     </Paper>
   );

@@ -61,14 +61,21 @@ apiClient.interceptors.response.use(
     }
 );
 
-export const portfolioApi = {    getAllEntries: async (accountId?: number): Promise<PortfolioEntry[]> => {
+export const portfolioApi = {
+    getAllEntries: async (accountId?: string): Promise<PortfolioEntry[]> => {
         try {
             const params = accountId ? { accountId } : {};
-            // Fix: remove trailing slash to prevent double slashes in URL
+            console.log('Fetching portfolio entries with params:', params);
             const response = await apiClient.get<PortfolioEntry[]>('', { params });
+            console.log('Fetched portfolio entries:', response.data);
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
+            console.error('Error fetching portfolio entries:', {
+                status: axiosError.response?.status,
+                statusText: axiosError.response?.statusText,
+                data: axiosError.response?.data,
+            });
             throw new Error(axiosError.response?.data as string || 'Failed to fetch portfolio entries');
         }
     },
@@ -81,7 +88,9 @@ export const portfolioApi = {    getAllEntries: async (accountId?: number): Prom
             const axiosError = error as AxiosError;
             throw new Error(axiosError.response?.data as string || 'Failed to fetch combined portfolio entries');
         }
-    },    addEntry: async (entry: Omit<PortfolioEntry, 'id' | 'userId'>): Promise<PortfolioEntry> => {
+    },
+
+    addEntry: async (entry: Omit<PortfolioEntry, 'id' | 'userId'>): Promise<PortfolioEntry> => {
         try {
             // Log the request being made for debugging
             console.log('Adding portfolio entry with data:', entry);
@@ -98,23 +107,14 @@ export const portfolioApi = {    getAllEntries: async (accountId?: number): Prom
                 data: axiosError.response?.data,
                 headers: axiosError.response?.headers
             });
-            
-            const errorMessage = typeof axiosError.response?.data === 'string' 
-                ? axiosError.response.data 
-                : (axiosError.response?.data as any)?.message || 'Failed to add portfolio entry';
-            
-            throw new Error(errorMessage);
+            throw new Error(axiosError.response?.data as string || 'Failed to add portfolio entry');
         }
     },
 
-    updateEntry: async (entry: Omit<PortfolioEntry, 'userId'>): Promise<PortfolioEntry> => {
+    updateEntry: async (entryId: string, entry: PortfolioEntry): Promise<PortfolioEntry> => { // Changed entryId type to string
         try {
-            // Ensure entry.id is present for the URL path
-            if (entry.id === undefined || entry.id === null) {
-                throw new Error('Entry ID is required for updating.');
-            }
-            const { id, ...dataToUpdate } = entry;
-            const response = await apiClient.put<PortfolioEntry>(`/${id}`, dataToUpdate);
+            // Fix: remove trailing slash to prevent double slashes in URL
+            const response = await apiClient.put<PortfolioEntry>(`/${entryId}`, entry);
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
@@ -122,8 +122,9 @@ export const portfolioApi = {    getAllEntries: async (accountId?: number): Prom
         }
     },
 
-    deleteEntry: async (entryId: number): Promise<void> => {
+    deleteEntry: async (entryId: string): Promise<void> => { // Changed entryId type to string
         try {
+            // Fix: remove trailing slash to prevent double slashes in URL
             await apiClient.delete(`/${entryId}`);
         } catch (error) {
             const axiosError = error as AxiosError;
@@ -131,17 +132,20 @@ export const portfolioApi = {    getAllEntries: async (accountId?: number): Prom
         }
     },
 
-    exportEntries: async (format: 'xlsx' | 'csv', accountId?: number): Promise<Blob> => {
+    exportEntries: async (format: 'xlsx' | 'csv', accountId?: string): Promise<Blob> => {
         try {
-            const params = accountId ? { accountId } : {};
-            const response = await apiClient.get<Blob>(`/export/${format}`, {
+            const params: { format: string; accountId?: string } = { format };
+            if (accountId) {
+                params.accountId = accountId;
+            }
+            const response = await apiClient.get<Blob>('/export', {
                 params,
-                responseType: 'blob', // Important for file downloads
+                responseType: 'blob',
             });
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
             throw new Error(axiosError.response?.data as string || `Failed to export entries as ${format}`);
         }
-    }
+    },
 };

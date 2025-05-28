@@ -37,14 +37,14 @@ import { convertCurrency } from '../utils/currencyConverter';
 import { useAuth } from '../components/Layout';
 
 export const PortfolioViewPage: React.FC = () => {
-    const { accountId } = useParams<{ accountId: string }>();
+    const { accountId: routeAccountId } = useParams<{ accountId: string }>();
     const navigate = useNavigate();
-    const { user, authLoading, login } = useAuth(); // Changed isLoading to authLoading
+    const { user, authLoading, login } = useAuth();
 
     const [account, setAccount] = useState<PortfolioAccount | null>(null);
     const [entries, setEntries] = useState<PortfolioEntry[]>([]);
     const [allAccounts, setAllAccounts] = useState<PortfolioAccount[]>([]);
-    const [accountEntries, setAccountEntries] = useState<Map<number, PortfolioEntry[]>>(new Map());
+    const [accountEntries, setAccountEntries] = useState<Map<string, PortfolioEntry[]>>(new Map());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -54,7 +54,7 @@ export const PortfolioViewPage: React.FC = () => {
     const [groupBy, setGroupBy] = useState<'type' | 'currency' | 'country' | 'source'>('type');
     const [selectedCurrency, setSelectedCurrency] = useState('SGD');
     const [showGraph, setShowGraph] = useState(true);
-    const isCombinedView = !accountId;
+    const isCombinedView = !routeAccountId;
 
     const handleApiError = (err: unknown): string => {
         if (err instanceof Error) {
@@ -67,23 +67,33 @@ export const PortfolioViewPage: React.FC = () => {
     };
 
     const loadData = async () => {
-        if (!user) return; // Don't load if no user
+        if (!user) {
+            console.warn('User is not authenticated. Skipping data load.');
+            return;
+        }
         try {
             setLoading(true);
             setError(null);
 
             if (isCombinedView) {
+                console.log('Fetching all entries for combined view.');
                 const entriesData = await portfolioApi.getAllEntries();
                 setEntries(entriesData);
                 setAccount(null);
             } else {
-                if (!accountId) throw new Error('Account ID is required');
-                const entriesData = await portfolioApi.getAllEntries(parseInt(accountId));
-                const accountData = await accountApi.getAccountById(parseInt(accountId));
+                if (!routeAccountId) {
+                    throw new Error('Account ID is required but not provided.');
+                }
+                console.log(`Fetching entries and account details for account ID: ${routeAccountId}`);
+                const [entriesData, accountData] = await Promise.all([
+                    portfolioApi.getAllEntries(routeAccountId),
+                    accountApi.getAccountById(routeAccountId)
+                ]);
                 setEntries(entriesData);
                 setAccount(accountData);
             }
         } catch (err) {
+            console.error('Error loading data:', err);
             setError(handleApiError(err));
         } finally {
             setLoading(false);
@@ -91,54 +101,65 @@ export const PortfolioViewPage: React.FC = () => {
     };
 
     const loadAllAccountsData = async () => {
-        if (!user) return; // Don't load if no user
+        if (!user) {
+            console.warn('User is not authenticated. Skipping accounts data load.');
+            return;
+        }
         try {
+            console.log('Fetching all accounts data.');
             const accountsData = await accountApi.getAllAccounts();
+            console.log('Fetched accounts data:', accountsData);
             setAllAccounts(accountsData);
-            const currentAccountEntries = new Map<number, PortfolioEntry[]>(); // Use a different name
+
+            const currentAccountEntries = new Map<string, PortfolioEntry[]>();
             for (const acc of accountsData) {
                 try {
+                    console.log(`Fetching entries for account ID: ${acc.id}`);
                     const accEntries = await portfolioApi.getAllEntries(acc.id);
                     currentAccountEntries.set(acc.id, accEntries);
                 } catch (err) {
-                    console.error(`Failed to load entries for account ${acc.id}:`, handleApiError(err));
+                    console.error(`Error fetching entries for account ID: ${acc.id}`, err);
                 }
             }
             setAccountEntries(currentAccountEntries);
         } catch (err) {
+            console.error('Error loading all accounts data:', err);
             setError(handleApiError(err));
         }
     };
 
     useEffect(() => {
-        if (user) { // Only load data if user is authenticated
-            loadData();
-            if (isCombinedView) {
-                loadAllAccountsData(); // Call renamed function
-            }
-        }
-    }, [accountId, isCombinedView, user]);
+        // Ensure all accounts data is loaded on component mount
+        console.log('Loading all accounts data on mount.');
+        loadAllAccountsData();
+    }, []); // Empty dependency array ensures this runs only once
+
+    useEffect(() => {
+        // Log the routeAccountId and isCombinedView for debugging
+        console.log('Route Account ID:', routeAccountId);
+        console.log('Is Combined View:', isCombinedView);
+
+        // Load data when the component mounts or when routeAccountId changes
+        loadData();
+    }, [routeAccountId]);
 
     const handleAddEntry = async (entry: Omit<PortfolioEntry, 'id' | 'accountId' | 'userId'>) => {
         if (!user) return;
         try {
             setError(null);
-            // accountId should be part of the entry object if it's for a specific account
-            // The backend will associate the userId
-            const currentAccountId = accountId ? parseInt(accountId) : undefined;
+            const currentAccountId = routeAccountId;
             if (currentAccountId === undefined && !isCombinedView) {
                 setError("Account ID is missing for adding an entry.");
                 return;
             }
             const entryData = currentAccountId !== undefined
                 ? { ...entry, accountId: currentAccountId }
-                : entry; 
-            // Ensure type compatibility if accountId might be undefined in entryData
+                : entry;
             const newEntry = await portfolioApi.addEntry(entryData as Omit<PortfolioEntry, 'id' | 'userId'>);
             setEntries(prevEntries => [...prevEntries, newEntry]);
             setIsAddDialogOpen(false);
             if (isCombinedView) loadAllAccountsData();
-            else loadData(); // Reload data for the current account view
+            else loadData();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to add entry';
             setError(message);
@@ -149,31 +170,31 @@ export const PortfolioViewPage: React.FC = () => {
         if (!user) return;
         try {
             setError(null);
-            const updatedEntry = await portfolioApi.updateEntry(entry);
+            const updatedEntry = await portfolioApi.updateEntry(entry.id, entry);
             setEntries(entries.map(e => e.id === updatedEntry.id ? updatedEntry : e));
             setIsEditDialogOpen(false);
             setSelectedEntry(null);
             if (isCombinedView) loadAllAccountsData();
-            else loadData(); // Reload data for the current account view
+            else loadData();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update entry';
             setError(message);
         }
     };
 
-    const handleDeleteEntry = async (entryId: number) => {
+    const handleDeleteEntry = async (entryId: string) => {
         if (!user) return;
         try {
             setError(null);
             await portfolioApi.deleteEntry(entryId);
             setEntries(entries.filter(e => e.id !== entryId));
             if (isCombinedView) loadAllAccountsData();
-            else loadData(); // Reload data for the current account view
+            else loadData();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete entry';
             setError(message);
         }
-    }; 
+    };
 
     const handleCloseError = () => {
         setError(null);
@@ -183,7 +204,7 @@ export const PortfolioViewPage: React.FC = () => {
         if (!user) return;
         try {
             setError(null);
-            const blob = await portfolioApi.exportEntries(format, accountId ? parseInt(accountId) : undefined);
+            const blob = await portfolioApi.exportEntries(format, routeAccountId ? routeAccountId : undefined);
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -215,7 +236,7 @@ export const PortfolioViewPage: React.FC = () => {
         }
     };
     
-    const calculateAccountNetWorth = (id: number) => {
+    const calculateAccountNetWorth = (id: string) => {
         if (!user) return 0;
         const accountSpecificEntries = accountEntries.get(id) || [];
         return accountSpecificEntries.reduce((total, entry) => {
@@ -223,18 +244,17 @@ export const PortfolioViewPage: React.FC = () => {
         }, 0);
     };
 
-    const handleAccountClick = (id: number) => {
+    const handleAccountClick = (id: string) => {
         navigate(`/portfolio/${id}`);
     };
 
     const handleEdit = (entry: PortfolioEntry) => {
-        console.log('Edit entry:', entry);
-        // Add edit logic here
+        setSelectedEntry(entry);
+        setIsEditDialogOpen(true);
     };
 
-    const handleDelete = (entryId: number) => {
-        console.log('Delete entry ID:', entryId);
-        // Add delete logic here
+    const handleDelete = (entryId: string) => {
+        handleDeleteEntry(entryId);
     };
 
     const renderContent = () => {
@@ -298,7 +318,7 @@ export const PortfolioViewPage: React.FC = () => {
                 accounts={allAccounts} 
                 onAccountClick={handleAccountClick} 
                 selectedCurrency={selectedCurrency} 
-                calculateAccountNetWorth={calculateAccountNetWorth} 
+                calculateAccountNetWorth={calculateAccountNetWorth}
             />
         );
     };
@@ -330,7 +350,7 @@ export const PortfolioViewPage: React.FC = () => {
     // Main content rendering starts here
     const currentNetWorth = isCombinedView 
         ? calculateTotalNetWorth() 
-        : (accountId ? calculateAccountNetWorth(parseInt(accountId)) : 0); // Ensure accountId is valid before parsing
+        : (routeAccountId ? calculateAccountNetWorth(routeAccountId) : 0);
 
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
@@ -351,7 +371,7 @@ export const PortfolioViewPage: React.FC = () => {
                 <Typography variant="h4" component="h1" gutterBottom sx={{ flexGrow: 1 }}>
                     {isCombinedView ? 'Portfolio Overview' : (account ? `${account.name} Overview` : 'Loading Account...')}
                 </Typography>
-                {!isCombinedView && (
+                {!isCombinedView && routeAccountId && (
                      <Tooltip title="View Combined Portfolio">
                         <Button variant="outlined" onClick={() => navigate('/portfolio')}>
                             View All Accounts
@@ -361,9 +381,9 @@ export const PortfolioViewPage: React.FC = () => {
             </Stack>
 
             <NetWorthBox 
-                totalNetWorth={currentNetWorth} // Corrected prop name
+                totalNetWorth={currentNetWorth}
                 selectedCurrency={selectedCurrency}
-                onCurrencyChange={setSelectedCurrency as (currency: string) => void} // Cast to expected type
+                onCurrencyChange={setSelectedCurrency as (currency: string) => void}
             />
 
             {isCombinedView && (
@@ -431,14 +451,14 @@ export const PortfolioViewPage: React.FC = () => {
 
                 <PortfolioTable 
                     entries={entries} 
-                    onEdit={(entry) => { setSelectedEntry(entry); setIsEditDialogOpen(true); }} 
-                    onDelete={handleDeleteEntry} 
-                    selectedCurrency={selectedCurrency} // This was the error, prop didn't exist
-                    loading={loading} // Added loading prop
+                    onEdit={handleEdit} 
+                    onDelete={handleDelete} 
+                    selectedCurrency={selectedCurrency}
+                    loading={loading}
                 />
             </Paper>
 
-            {user && !isCombinedView && accountId && (
+            {user && !isCombinedView && routeAccountId && (
                 <Zoom in={true}>
                     <Fab 
                         color="primary" 
@@ -453,22 +473,22 @@ export const PortfolioViewPage: React.FC = () => {
 
             <Dialog open={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} maxWidth="sm" fullWidth>
                 <AddEntryForm 
-                    onSubmit={handleAddEntry} // Changed from onAddEntry to onSubmit
-                    onSuccess={() => setIsAddDialogOpen(false)} // Added onSuccess (previously part of onCancel)
+                    onSubmit={handleAddEntry}
+                    onSuccess={() => setIsAddDialogOpen(false)}
                     onCancel={() => setIsAddDialogOpen(false)} 
-                    accountId={accountId ? parseInt(accountId) : undefined} 
+                    accountId={routeAccountId}
                 />
             </Dialog>
 
             <Dialog open={isEditDialogOpen} onClose={() => setIsEditDialogOpen(false)} maxWidth="sm" fullWidth>
                 {selectedEntry && (
                     <AddEntryForm 
-                        onSubmit={handleEditEntry} // Changed from onAddEntry to onSubmit
-                        onSuccess={() => { setIsEditDialogOpen(false); setSelectedEntry(null); }} // Added onSuccess
+                        onSubmit={handleEditEntry}
+                        onSuccess={() => { setIsEditDialogOpen(false); setSelectedEntry(null); }} 
                         onCancel={() => { setIsEditDialogOpen(false); setSelectedEntry(null); }} 
-                        entry={selectedEntry} // Renamed from existingEntry to entry
-                        isEdit={true} // Explicitly set isEdit
-                        accountId={selectedEntry.accountId} 
+                        entry={selectedEntry}
+                        isEdit={true} 
+                        accountId={selectedEntry.accountId} // This should be string | undefined
                     />
                 )}
             </Dialog>

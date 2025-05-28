@@ -5,8 +5,8 @@ import { PortfolioAccount } from '../types/portfolio';
 interface AccountListProps {
   accounts: PortfolioAccount[];
   selectedCurrency: string;
-  calculateAccountNetWorth: (accountId: number) => number;
-  onAccountClick: (accountId: number) => void;
+  calculateAccountNetWorth: (accountId: string) => number; // Changed to string
+  onAccountClick: (accountId: string) => void; // Changed to string
 }
 
 export const AccountList: React.FC<AccountListProps> = ({

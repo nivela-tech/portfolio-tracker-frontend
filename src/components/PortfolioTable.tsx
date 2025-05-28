@@ -17,7 +17,7 @@ interface PortfolioTableProps {
     entries: PortfolioEntry[];
     showMemberName?: boolean;
     onEdit: (entry: PortfolioEntry) => void;
-    onDelete: (entryId: number) => void;
+    onDelete: (entryId: string) => void; // Changed to string
     selectedCurrency: string; // Added selectedCurrency
     loading?: boolean; // Added loading
 }

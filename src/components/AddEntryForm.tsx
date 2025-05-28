@@ -16,7 +16,7 @@ interface AddEntryFormProps {
     onSubmit?: (entry: PortfolioEntry) => void; // Renamed from onAddEntry
     onSuccess?: () => void; // Renamed from onEntryAdded
     onCancel?: () => void;
-    accountId?: number; // Changed to optional
+    accountId?: string; // Changed to optional and string
     entry?: PortfolioEntry | null;
     isEdit?: boolean;
 }
@@ -52,8 +52,8 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
         e.preventDefault();
         const entryData = {
             ...formData,
-            id: entry?.id || 0,
-            accountId,
+            id: entry?.id || '', // Changed to empty string for new entries
+            accountId: accountId, // Ensure accountId is a string or undefined
             amount: Number(formData.amount),
             dateAdded: new Date(formData.dateAdded!).toISOString()
         } as PortfolioEntry;
