@@ -1,4 +1,4 @@
-# Portfolio Tracker UI Guide
+# Flamefolio UI Guide
 
 This document provides visual descriptions and component interactions to help understand how the UI works.
 
@@ -12,7 +12,7 @@ This document provides visual descriptions and component interactions to help un
 ### 2. Portfolio View Page
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│ Portfolio Tracker                             🔄 User Name ⏏️ │
+│ Flamefolio                                    🔄 User Name ⏏️ │
 ├─────────┬─────────────────────────────────────────────────────┤
 │         │                                                     │
 │         │  📊 Net Worth: $XXXXX.XX             Currency: [SGD▼]│
@@ -51,7 +51,7 @@ This document provides visual descriptions and component interactions to help un
 ### 3. Account Management
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│ Portfolio Tracker                             🔄 User Name ⏏️ │
+│ Flamefolio                                    🔄 User Name ⏏️ │
 ├─────────┬─────────────────────────────────────────────────────┤
 │         │                                                     │
 │         │  Manage Accounts                                    │

@@ -40,11 +40,13 @@ import { usePortfolioData } from '../hooks/usePortfolioData';
 import { NetWorthSection } from '../components/NetWorthSection';
 import { PortfolioContent } from '../components/PortfolioContent';
 import { EntryDialogs } from '../components/EntryDialogs';
+import { useUserPreferences } from '../contexts/UserPreferencesContext';
 
 export const PortfolioViewPage: React.FC = () => {
     const { accountId: routeAccountId } = useParams<{ accountId: string }>();
     const navigate = useNavigate();
     const { user, authLoading, login } = useAuth();
+    const { preferences } = useUserPreferences();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -52,7 +54,7 @@ export const PortfolioViewPage: React.FC = () => {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState<PortfolioEntry | null>(null);
-    const [selectedCurrency, setSelectedCurrency] = useState('SGD');
+    const [selectedCurrency, setSelectedCurrency] = useState(preferences.defaultCurrency);
     const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
     const [groupBy, setGroupBy] = useState<'type' | 'currency' | 'country' | 'source'>('type');
     const [showGraph, setShowGraph] = useState(true);
@@ -209,9 +211,8 @@ export const PortfolioViewPage: React.FC = () => {
 
     if (!user) {
         return (
-            <Container sx={{ textAlign: 'center', mt: 5 }}>
-                <Typography variant="h5" gutterBottom>
-                    Welcome to Your Portfolio Tracker
+            <Container sx={{ textAlign: 'center', mt: 5 }}>                <Typography variant="h5" gutterBottom>
+                    Welcome to Your Flamefolio
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 3 }}>
                     Please sign in to manage and view your portfolios.
@@ -269,6 +270,7 @@ export const PortfolioViewPage: React.FC = () => {
                 justifyContent="space-between" 
                 alignItems={isMobile ? "stretch" : "center"} 
                 mb={2}
+                mt={3}
                 spacing={isMobile ? 1 : 0}
             >
                 <Typography variant="h6" sx={{ mb: isMobile ? 1 : 0 }}>

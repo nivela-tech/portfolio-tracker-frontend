@@ -1,4 +1,4 @@
-# Portfolio Tracker Quick Reference
+# Flamefolio Quick Reference
 
 ## Quick Start
 

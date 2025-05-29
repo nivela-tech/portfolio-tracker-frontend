@@ -1,4 +1,4 @@
-# Portfolio Tracker API Map
+# Flamefolio API Map
 
 ## Frontend-to-Backend Integration Map
 

@@ -5,8 +5,6 @@ import {
   Box,
   Paper,
   Stack,
-  FormControl,
-  InputLabel,
   Select,
   MenuItem,
   useTheme,
@@ -21,12 +19,15 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorDisplay } from '../components/ErrorDisplay';
 import PerformanceDashboard from '../components/PerformanceDashboard';
 import { usePortfolioData } from '../hooks/usePortfolioData';
+import { CURRENCIES } from '../utils/constants';
+import { useUserPreferences } from '../contexts/UserPreferencesContext';
 
 export const PerformancePage: React.FC = () => {
   const { user, authLoading, login } = useAuth();
+  const { preferences } = useUserPreferences();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [selectedCurrency, setSelectedCurrency] = useState('SGD');
+  const [selectedCurrency, setSelectedCurrency] = useState(preferences.defaultCurrency);
 
   // Use combined portfolio data (no accountId)
   const { entries, loading, error } = usePortfolioData();
@@ -141,8 +142,7 @@ export const PerformancePage: React.FC = () => {
                   sx={{
                     color: theme.palette.text.secondary,
                     fontWeight: 500,
-                  }}
-                >
+                  }}                >
                   Comprehensive insights and metrics across your entire portfolio
                 </Typography>
               </Box>
@@ -150,30 +150,58 @@ export const PerformancePage: React.FC = () => {
           </Box>
 
           {/* Currency Selector */}
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Currency</InputLabel>
+          <Box sx={{ 
+            minWidth: 120,
+            display: 'flex',
+            justifyContent: 'flex-end'
+          }}>
             <Select
+              size="small"
               value={selectedCurrency}
-              label="Currency"
-              onChange={handleCurrencyChange}
+              onChange={e => handleCurrencyChange(e)}
               sx={{
+                minWidth: 80,
+                height: 36,
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(15, 23, 42, 0.5)'
+                  : 'rgba(248, 250, 252, 0.8)',
                 borderRadius: 2,
-                backgroundColor: alpha(theme.palette.background.paper, 0.8),
+                border: `1px solid ${theme.palette.mode === 'dark' ? '#334155' : '#e5e7eb'}`,
+                '& .MuiSelect-select': {
+                  py: 0.75,
+                  px: 1.5,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                },
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: alpha(theme.palette.primary.main, 0.2),
+                  border: 'none',
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: alpha(theme.palette.primary.main, 0.4),
+                  border: 'none',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  border: `2px solid ${theme.palette.primary.main}`,
                 },
               }}
+              variant="outlined"
             >
-              <MenuItem value="SGD">SGD</MenuItem>
-              <MenuItem value="USD">USD</MenuItem>
-              <MenuItem value="EUR">EUR</MenuItem>
-              <MenuItem value="GBP">GBP</MenuItem>
-              <MenuItem value="JPY">JPY</MenuItem>
+              {CURRENCIES.map(currency => (
+                <MenuItem 
+                  key={currency} 
+                  value={currency}
+                  sx={{
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    py: 1,
+                  }}
+                >
+                  {currency}
+                </MenuItem>
+              ))}
             </Select>
-          </FormControl>
+          </Box>
         </Stack>
       </Box>
 

@@ -1,6 +1,6 @@
-# Portfolio Tracker Frontend Documentation
+# Flamefolio Frontend Documentation
 
-This document provides a high-level overview of the Portfolio Tracker frontend application to help AI agents work with the codebase more effectively.
+This document provides a high-level overview of the Flamefolio frontend application to help AI agents work with the codebase more effectively.
 
 ## Application Structure
 

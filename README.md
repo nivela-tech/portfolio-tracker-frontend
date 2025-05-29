@@ -1,6 +1,6 @@
-# Portfolio Tracker - Frontend
+# Flamefolio - Frontend
 
-This is the frontend for the Portfolio Tracker application.
+This is the frontend for the Flamefolio application.
 
 It is built with React, TypeScript, and Material UI.
 

@@ -3,9 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 import { Layout, AuthProvider, useAuth } from './components/Layout'; // Import AuthProvider
+import { UserPreferencesProvider, useUserPreferences } from './contexts/UserPreferencesContext';
 import { AccountsPage } from './pages/AccountsPage';
 import { PortfolioViewPage } from './pages/PortfolioViewPage';
 import { PerformancePage } from './pages/PerformancePage';
+import { SettingsPage } from './pages/SettingsPage';
 import { AddEntryPage } from './pages/AddEntryPage';
 import LandingPage from './pages/LandingPage'; // Import LandingPage
 import './App.css';
@@ -554,15 +556,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }
   return children;
 };
 
-export function App() {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+// App wrapper that uses preferences
+const AppWithPreferences: React.FC = () => {
+  const { preferences, updatePreferences } = useUserPreferences();
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+    updatePreferences({ isDarkMode: !preferences.isDarkMode });
   };
 
   return (
-    <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+    <ThemeProvider theme={preferences.isDarkMode ? darkTheme : lightTheme}>
       <CssBaseline />
       <BrowserRouter>
         <AuthProvider>
@@ -572,7 +575,7 @@ export function App() {
               path="/portfolio"
               element={
                 <ProtectedRoute>
-                  <Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode}>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={preferences.isDarkMode}>
                     <PortfolioViewPage />
                   </Layout>
                 </ProtectedRoute>
@@ -581,8 +584,18 @@ export function App() {
               path="/performance"
               element={
                 <ProtectedRoute>
-                  <Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode}>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={preferences.isDarkMode}>
                     <PerformancePage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={preferences.isDarkMode}>
+                    <SettingsPage />
                   </Layout>
                 </ProtectedRoute>
               }
@@ -591,7 +604,7 @@ export function App() {
               path="/accounts"
               element={
                 <ProtectedRoute>
-                  <Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode}>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={preferences.isDarkMode}>
                     <AccountsPage />
                   </Layout>
                 </ProtectedRoute>
@@ -601,7 +614,7 @@ export function App() {
               path="/portfolio/:accountId"
               element={
                 <ProtectedRoute>
-                  <Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode}>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={preferences.isDarkMode}>
                     <PortfolioViewPage />
                   </Layout>
                 </ProtectedRoute>
@@ -611,7 +624,7 @@ export function App() {
               path="/add-entry/:accountId"
               element={
                 <ProtectedRoute>
-                  <Layout toggleTheme={toggleTheme} isDarkMode={isDarkMode}>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={preferences.isDarkMode}>
                     <AddEntryPage />
                   </Layout>
                 </ProtectedRoute>
@@ -622,6 +635,14 @@ export function App() {
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
+  );
+};
+
+export function App() {
+  return (
+    <UserPreferencesProvider>
+      <AppWithPreferences />
+    </UserPreferencesProvider>
   );
 }
 

@@ -110,9 +110,8 @@ const LandingPage: React.FC = () => {
                   fontWeight: 700,
                   color: theme.palette.common.white,
                   letterSpacing: '-0.01em'
-                }}
-              >
-                Portfolio Tracker
+                }}              >
+                Flamefolio
               </Typography>
               <Chip
                 icon={<VerifiedIcon />}
@@ -367,9 +366,8 @@ const LandingPage: React.FC = () => {
               sx={{ 
                 color: alpha(theme.palette.common.white, 0.7),
                 fontWeight: 500
-              }}
-            >
-              © 2024 Portfolio Tracker. Professional Investment Management Platform.
+              }}            >
+              © 2024 Flamefolio. Professional Investment Management Platform.
             </Typography>
           </Container>
         </Box>

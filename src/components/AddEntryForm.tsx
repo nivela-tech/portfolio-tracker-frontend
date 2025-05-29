@@ -18,6 +18,7 @@ import {
     alpha,
     Avatar
 } from '@mui/material';
+import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import {
     TrendingUp as TrendingUpIcon,
     AccountBalance as AccountBalanceIcon,
@@ -54,11 +55,11 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
 }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const [formData, setFormData] = useState<Partial<PortfolioEntry>>({
+    const { preferences } = useUserPreferences();    const [formData, setFormData] = useState<Partial<PortfolioEntry>>({
         type: 'STOCK',
-        currency: 'USD',
+        currency: preferences.defaultCurrency,
         amount: 0,
-        country: 'Singapore',
+        country: preferences.defaultCountry,
         source: '',
         notes: '',
         dateAdded: new Date().toISOString().split('T')[0]

@@ -27,6 +27,7 @@ import {
   BusinessCenter as BusinessCenterIcon, // Better for Portfolio (business/investment portfolio)
   Analytics as AnalyticsIcon, // Even better for Performance/Analytics
   AccountBalance as AccountBalanceIcon, // Better for bank accounts
+  Settings as SettingsIcon, // Added for Settings
   ExitToApp as ExitToAppIcon, // Added for Logout
   Login as LoginIcon, // Added for Login
 } from '@mui/icons-material';
@@ -233,8 +234,7 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
                 fontSize: 20
               }}
             />
-          </Box>
-          <Typography 
+          </Box>          <Typography 
             variant="subtitle1" 
             sx={{ 
               fontWeight: 700,
@@ -245,7 +245,7 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
               letterSpacing: '-0.01em',
             }}
           >
-            Portfolio
+            Flamefolio
           </Typography>
         </Box>
       </Toolbar>
@@ -394,13 +394,54 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
               primaryTypographyProps={{
                 fontWeight: location.pathname.startsWith('/accounts') ? 600 : 500,
                 fontSize: '0.875rem'
+              }}            />
+          </ListItemButton>
+          
+          <ListItemButton
+            component={RouterLink} 
+            to="/settings" 
+            selected={location.pathname.startsWith('/settings')}
+            onClick={handleDrawerClose}
+            sx={{ 
+              borderRadius: 2,
+              mb: 1,
+              minHeight: isMobile ? 48 : 44,
+              px: 2,
+              py: 1.5,
+              '&.Mui-selected': {
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(59, 130, 246, 0.12)'
+                  : 'rgba(21, 101, 192, 0.08)',
+                borderLeft: `3px solid ${theme.palette.primary.main}`,
+                '&:hover': {
+                  backgroundColor: theme.palette.mode === 'dark' 
+                    ? 'rgba(59, 130, 246, 0.16)'
+                    : 'rgba(21, 101, 192, 0.12)',
+                },
+              },
+              '&:hover': {
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(59, 130, 246, 0.04)'
+                  : 'rgba(21, 101, 192, 0.04)',
+                transform: 'translateX(4px)',
+                transition: 'all 0.2s ease',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40 }}>
+              <SettingsIcon sx={{ color: location.pathname.startsWith('/settings') ? theme.palette.primary.main : theme.palette.text.secondary }} />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Settings" 
+              primaryTypographyProps={{
+                fontWeight: location.pathname.startsWith('/settings') ? 600 : 500,
+                fontSize: '0.875rem'
               }}
             />
           </ListItemButton>
         </List>
 
-        {/* Professional footer in sidebar */}
-        <Box sx={{ 
+        {/* Professional footer in sidebar */}        <Box sx={{ 
           position: 'absolute', 
           bottom: 16, 
           left: 16, 
@@ -410,13 +451,11 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
           backgroundColor: theme.palette.mode === 'dark' 
             ? 'rgba(15, 23, 42, 0.5)'
             : 'rgba(248, 250, 252, 0.8)',
-          border: `1px solid ${theme.palette.mode === 'dark' ? '#334155' : '#e5e7eb'}`,
-        }}>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.7rem' }}>
-            Professional Portfolio Management
+          border: `1px solid ${theme.palette.mode === 'dark' ? '#334155' : '#e5e7eb'}`,        }}>          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.7rem' }}>
+            Flamefolio
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.65rem', mt: 0.5 }}>
-            v2.0 - Bank Level Security
+            v2.0
           </Typography>
         </Box>
       </Box>
@@ -483,8 +522,7 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
                   color: theme.palette.primary.main,
                   fontSize: isMobile ? 20 : 24 
                 }}
-              />
-              <Typography 
+              />              <Typography 
                 variant="h6" 
                 noWrap 
                 component="div" 
@@ -499,7 +537,7 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
                   letterSpacing: '-0.02em',
                 }}
               >
-                Portfolio Tracker
+                Flamefolio
               </Typography>
             </Box>
           </Box>
@@ -541,8 +579,7 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
                         : '0 4px 6px rgba(0, 0, 0, 0.1)',
                     }} 
                   />
-                )}
-                {!isMobile && (
+                )}                {!isMobile && (
                   <Box>
                     <Typography 
                       variant="subtitle2" 
@@ -553,15 +590,6 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
                       }}
                     >
                       {user.name}
-                    </Typography>
-                    <Typography 
-                      variant="caption" 
-                      sx={{ 
-                        color: theme.palette.text.secondary,
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      Portfolio Manager
                     </Typography>
                   </Box>
                 )}
