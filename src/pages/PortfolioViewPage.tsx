@@ -135,24 +135,28 @@ export const PortfolioViewPage: React.FC = () => {
 
     const handleCloseError = () => {
         setError(null);
-    };
-
-    const handleExport = async (format: 'xlsx' | 'csv') => {
+    };    const handleExport = async (format: 'xlsx' | 'csv') => {
         if (!user) return;
         try {
             setError(null);
             const blob = await portfolioApi.exportEntries(format, routeAccountId ? routeAccountId : undefined);
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `portfolio_entries.${format}`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
+            
+            if (blob && blob.size > 0) {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `portfolio_entries.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } else {
+                setError(`No data to export as ${format}`);
+            }
         } catch (err) {
             const message = err instanceof Error ? err.message : `Failed to export as ${format}`;
-            setError(message);
+            console.error(`Export error (${format}):`, err);
+            setError(`Export failed: ${message}`);
         }
     };
 

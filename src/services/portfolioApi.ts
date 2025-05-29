@@ -122,15 +122,16 @@ export const portfolioApi = {    getAllEntries: async (accountId?: string): Prom
             const axiosError = error as AxiosError;
             throw new Error(axiosError.response?.data as string || 'Failed to delete portfolio entry');
         }
-    },
-
-    exportEntries: async (format: 'xlsx' | 'csv', accountId?: string): Promise<Blob> => {
+    },    exportEntries: async (format: 'xlsx' | 'csv', accountId?: string): Promise<Blob> => {
         try {
-            const params: { format: string; accountId?: string } = { format };
+            const params: { accountId?: string } = {};
             if (accountId) {
                 params.accountId = accountId;
             }
-            const response = await apiClient.get<Blob>('/export', {
+            // Use the correct endpoint based on the format
+            const endpoint = `/export/${format}`;
+            
+            const response = await apiClient.get<Blob>(endpoint, {
                 params,
                 responseType: 'blob',
             });
