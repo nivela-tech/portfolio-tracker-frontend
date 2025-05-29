@@ -14,7 +14,10 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
-    Zoom
+    Zoom,
+    Stack,
+    IconButton,
+    Tooltip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { AddAccountForm } from '../components/AddAccountForm';
@@ -126,6 +129,24 @@ export const AccountsPage: React.FC = () => {
     loadAccounts();
   };
 
+  const handleExport = async (format: 'xlsx' | 'csv') => {
+    if (!user) return;
+    try {
+        const blob = await accountApi.exportAccounts(format);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `accounts.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (err) {
+        const message = err instanceof Error ? err.message : `Failed to export as ${format}`;
+        setError(message);
+    }
+};
+
   const renderAccounts = () => {
     if (loading) {
       return <CircularProgress />;
@@ -179,7 +200,7 @@ export const AccountsPage: React.FC = () => {
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 4, position: 'relative' }}>
       <Typography variant="h5" component="h2" gutterBottom>
-        Accounts
+        Manage Accounts
       </Typography>
       <Box sx={{ mt: 3 }}>
         {renderAccounts()}

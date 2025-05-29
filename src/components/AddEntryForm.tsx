@@ -19,6 +19,7 @@ interface AddEntryFormProps {
     accountId?: string; // Changed to optional and string
     entry?: PortfolioEntry | null;
     isEdit?: boolean;
+    user?: { email?: string }; // Added user prop
 }
 
 export const AddEntryForm: React.FC<AddEntryFormProps> = ({
@@ -27,7 +28,8 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
     onCancel,
     accountId,
     entry,
-    isEdit = false
+    isEdit = false,
+    user // Destructure user prop
 }) => {
     const [formData, setFormData] = useState<Partial<PortfolioEntry>>({
         type: 'STOCK',
@@ -52,19 +54,20 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
         e.preventDefault();
         const entryData = {
             ...formData,
-            id: entry?.id || '', // Changed to empty string for new entries
-            accountId: accountId, // Ensure accountId is a string or undefined
-            amount: Number(formData.amount),
-            dateAdded: new Date(formData.dateAdded!).toISOString()
+            id: entry?.id || '',
+            accountId: accountId || '',
+            dateAdded: formData.dateAdded ? `${formData.dateAdded}T00:00:00` : new Date().toISOString(),
         } as PortfolioEntry;
 
         if (onSubmit) {
             onSubmit(entryData);
         }
-        if (onSuccess) { // Renamed from onEntryAdded
+        if (onSuccess) {
             onSuccess();
         }
-    };    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev: Partial<PortfolioEntry>) => ({ ...prev, [name]: value }));
     };
@@ -86,7 +89,8 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
                                 onChange={handleChange}
                                 fullWidth
                                 required
-                            >                                {PORTFOLIO_TYPES.map((type) => (
+                            >
+                                {PORTFOLIO_TYPES.map((type) => (
                                     <MenuItem key={type} value={type}>
                                         {type.replace('_', ' ')}
                                     </MenuItem>
@@ -135,7 +139,7 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
                                 name="country"
                                 select
                                 label="Country"
-                                value={formData.country || 'United States'} // Default to United States for display
+                                value={formData.country || 'United States'}
                                 onChange={handleChange}
                                 fullWidth
                                 required

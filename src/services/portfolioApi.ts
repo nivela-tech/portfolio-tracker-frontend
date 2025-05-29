@@ -90,31 +90,24 @@ export const portfolioApi = {
         }
     },
 
-    addEntry: async (entry: Omit<PortfolioEntry, 'id' | 'userId'>): Promise<PortfolioEntry> => {
+    addEntry: async (entry: Omit<PortfolioEntry, 'id' | 'userId'>, userEmail: string): Promise<PortfolioEntry> => {
         try {
-            // Log the request being made for debugging
-            console.log('Adding portfolio entry with data:', entry);
-            // Fix: remove trailing slash to prevent double slashes in URL
-            const response = await apiClient.post<PortfolioEntry>('', entry);
-            console.log('Portfolio entry added successfully:', response.data);
+            const response = await apiClient.post<PortfolioEntry>('/entries', {
+                ...entry,
+                user: { email: userEmail },
+            });
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
-            // Enhanced error logging
-            console.error('Portfolio entry creation failed:', {
-                status: axiosError.response?.status,
-                statusText: axiosError.response?.statusText,
-                data: axiosError.response?.data,
-                headers: axiosError.response?.headers
-            });
             throw new Error(axiosError.response?.data as string || 'Failed to add portfolio entry');
         }
     },
 
-    updateEntry: async (entryId: string, entry: PortfolioEntry): Promise<PortfolioEntry> => { // Changed entryId type to string
+    updateEntry: async (entryId: string, entry: PortfolioEntry): Promise<PortfolioEntry> => {
         try {
-            // Fix: remove trailing slash to prevent double slashes in URL
-            const response = await apiClient.put<PortfolioEntry>(`/${entryId}`, entry);
+            const response = await apiClient.put<PortfolioEntry>(`/entries/${entryId}`, entry, {
+                headers: { 'Content-Type': 'application/json' },
+            });
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
@@ -122,10 +115,11 @@ export const portfolioApi = {
         }
     },
 
-    deleteEntry: async (entryId: string): Promise<void> => { // Changed entryId type to string
+    deleteEntry: async (entryId: string): Promise<void> => {
         try {
-            // Fix: remove trailing slash to prevent double slashes in URL
-            await apiClient.delete(`/${entryId}`);
+            await apiClient.delete(`/entries/${entryId}`, {
+                headers: { 'Content-Type': 'application/json' },
+            });
         } catch (error) {
             const axiosError = error as AxiosError;
             throw new Error(axiosError.response?.data as string || 'Failed to delete portfolio entry');

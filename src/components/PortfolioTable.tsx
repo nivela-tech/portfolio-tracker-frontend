@@ -67,22 +67,26 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                             <TableCell>{entry.country}</TableCell>
                             <TableCell>{entry.source}</TableCell>
                             <TableCell align="center">
-                                <Tooltip title="Edit">
-                                    <IconButton 
-                                        onClick={() => onEdit(entry)}
-                                        size="small"
-                                    >
-                                        <EditIcon />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Delete">
-                                    <IconButton 
-                                        onClick={() => onDelete(entry.id)}
-                                        size="small"
-                                    >
-                                        <DeleteIcon />
-                                    </IconButton>
-                                </Tooltip>
+                                {onEdit !== (() => {}) && (
+                                    <Tooltip title="Edit">
+                                        <IconButton 
+                                            onClick={() => onEdit(entry)}
+                                            size="small"
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
+                                {onDelete !== (() => {}) && (
+                                    <Tooltip title="Delete">
+                                        <IconButton 
+                                            onClick={() => onDelete(entry.id)}
+                                            size="small"
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
                             </TableCell>
                         </TableRow>
                     ))}

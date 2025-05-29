@@ -126,5 +126,18 @@ export const accountApi = {    createAccount: async (account: Omit<PortfolioAcco
             const axiosError = error as AxiosError;
             throw new Error(axiosError.response?.data as string || 'Failed to delete account');
         }
+    },
+
+    exportAccounts: async (format: 'xlsx' | 'csv'): Promise<Blob> => {
+        try {
+            const response = await apiClient.get<Blob>(`/accounts/export`, {
+                params: { format },
+                responseType: 'blob',
+            });
+            return response.data;
+        } catch (error) {
+            const axiosError = error as AxiosError;
+            throw new Error(axiosError.response?.data as string || `Failed to export accounts as ${format}`);
+        }
     }
 };
