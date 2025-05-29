@@ -12,7 +12,8 @@ interface EntryDialogsProps {
     selectedEntry: any;
     loadData: () => void;
     setSelectedEntry: (entry: any | null) => void;
-    handleAddEntry: (entry: any) => void; // Add handleAddEntry as a prop
+    handleAddEntry: (entry: any) => void;
+    handleEditEntry?: (entry: any) => void; // Add handleEditEntry as a prop
 }
 
 export const EntryDialogs: React.FC<EntryDialogsProps> = ({
@@ -24,22 +25,10 @@ export const EntryDialogs: React.FC<EntryDialogsProps> = ({
     selectedEntry,
     loadData,
     setSelectedEntry,
-    handleAddEntry // Destructure handleAddEntry
+    handleAddEntry, // Destructure handleAddEntry
+    handleEditEntry // Destructure handleEditEntry
 }) => (
     <>
-        {/* Add Entry Button */}
-        {user && (
-            <Zoom in={true}>
-                <Fab 
-                    color="primary" 
-                    aria-label="add entry" 
-                    sx={{ position: 'fixed', bottom: 16, right: 16 }} 
-                    onClick={() => setIsAddDialogOpen(true)}
-                >
-                    <AddIcon />
-                </Fab>
-            </Zoom>
-        )}
 
         {/* Add Entry Dialog */}
         <Dialog
@@ -56,17 +45,16 @@ export const EntryDialogs: React.FC<EntryDialogsProps> = ({
                 }} 
                 onCancel={() => setIsAddDialogOpen(false)} 
             />
-        </Dialog>
-
-        {/* Edit Entry Dialog */}
+        </Dialog>        {/* Edit Entry Dialog */}
         <Dialog
             open={isEditDialogOpen}
             onClose={() => setIsEditDialogOpen(false)}
             maxWidth="sm"
             fullWidth
-        >
-            <AddEntryForm 
+        >            <AddEntryForm 
                 entry={selectedEntry} 
+                onSubmit={handleEditEntry}
+                isEdit={true} 
                 onSuccess={() => {
                     loadData();
                     setIsEditDialogOpen(false);

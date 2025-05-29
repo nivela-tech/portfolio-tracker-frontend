@@ -11,6 +11,7 @@ export interface PortfolioEntry {
     source: string;
     notes?: string;
     account?: PortfolioAccount;
+    user?: { email: string }; // Added for authentication purposes
 }
 
 export interface PortfolioAccount {

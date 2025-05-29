@@ -20,6 +20,7 @@ interface PortfolioTableProps {
     onDelete: (entryId: string) => void; // Changed to string
     selectedCurrency: string; // Added selectedCurrency
     loading?: boolean; // Added loading
+    showActions?: boolean; // Added to control visibility of Actions column
 }
 
 export const PortfolioTable: React.FC<PortfolioTableProps> = ({ 
@@ -28,21 +29,21 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
     onEdit, 
     onDelete,
     selectedCurrency, // Added selectedCurrency
-    loading // Added loading
+    loading, // Added loading
+    showActions = true // Default to showing actions
 }) => {
     return (
         <TableContainer component={Paper}>
             <Table>
                 <TableHead>
-                    <TableRow>
-                        <TableCell>Date Added</TableCell>
-                        {showMemberName && <TableCell>Member Name</TableCell>}
+                    <TableRow>                        <TableCell>Date Added</TableCell>
+                        {showMemberName && <TableCell>Account Name</TableCell>}
                         <TableCell>Type</TableCell>
-                        <TableCell>Currency</TableCell>
-                        <TableCell>Amount</TableCell>
-                        <TableCell>Country</TableCell>
+                        <TableCell>Currency</TableCell>                        <TableCell>Amount</TableCell>                        <TableCell>Country</TableCell>
                         <TableCell>Source</TableCell>
-                        <TableCell align="center">Actions</TableCell>
+                        {showActions && (
+                            <TableCell align="center">Actions</TableCell>
+                        )}
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -63,11 +64,10 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2
                                 })}
-                            </TableCell>
-                            <TableCell>{entry.country}</TableCell>
+                            </TableCell>                            <TableCell>{entry.country}</TableCell>
                             <TableCell>{entry.source}</TableCell>
-                            <TableCell align="center">
-                                {onEdit !== (() => {}) && (
+                            {showActions && (
+                                <TableCell align="center">
                                     <Tooltip title="Edit">
                                         <IconButton 
                                             onClick={() => onEdit(entry)}
@@ -76,8 +76,6 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                                             <EditIcon />
                                         </IconButton>
                                     </Tooltip>
-                                )}
-                                {onDelete !== (() => {}) && (
                                     <Tooltip title="Delete">
                                         <IconButton 
                                             onClick={() => onDelete(entry.id)}
@@ -86,8 +84,8 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                                             <DeleteIcon />
                                         </IconButton>
                                     </Tooltip>
-                                )}
-                            </TableCell>
+                                </TableCell>
+                            )}
                         </TableRow>
                     ))}
                 </TableBody>

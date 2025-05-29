@@ -34,10 +34,7 @@ apiClient.interceptors.request.use(config => {
             (config.headers as AxiosRequestHeaders)['X-CSRF-TOKEN'] = csrfToken;
         } else {
             console.warn('CSRF token not found in cookies. This might cause 403 Forbidden errors.');
-        }
-    }
-    // Log URL being requested for debugging
-    console.log(`Portfolio API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+        }    }
     return config;
 });
 
@@ -61,13 +58,10 @@ apiClient.interceptors.response.use(
     }
 );
 
-export const portfolioApi = {
-    getAllEntries: async (accountId?: string): Promise<PortfolioEntry[]> => {
+export const portfolioApi = {    getAllEntries: async (accountId?: string): Promise<PortfolioEntry[]> => {
         try {
             const params = accountId ? { accountId } : {};
-            console.log('Fetching portfolio entries with params:', params);
             const response = await apiClient.get<PortfolioEntry[]>('', { params });
-            console.log('Fetched portfolio entries:', response.data);
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
@@ -101,24 +95,28 @@ export const portfolioApi = {
             const axiosError = error as AxiosError;
             throw new Error(axiosError.response?.data as string || 'Failed to add portfolio entry');
         }
-    },
-
-    updateEntry: async (entryId: string, entry: PortfolioEntry): Promise<PortfolioEntry> => {
+    },    updateEntry: async (entryId: string, entry: PortfolioEntry): Promise<PortfolioEntry> => {
         try {
+            // Make sure entry.user.email exists
+            if (!entry.user || !entry.user.email) {
+                throw new Error('User email is required for updating an entry');
+            }
+            
             const response = await apiClient.put<PortfolioEntry>(`/entries/${entryId}`, entry, {
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                },
             });
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;
             throw new Error(axiosError.response?.data as string || 'Failed to update portfolio entry');
         }
-    },
-
-    deleteEntry: async (entryId: string): Promise<void> => {
+    },    deleteEntry: async (entryId: string, userEmail?: string): Promise<void> => {
         try {
             await apiClient.delete(`/entries/${entryId}`, {
                 headers: { 'Content-Type': 'application/json' },
+                data: userEmail ? { user: { email: userEmail } } : undefined // Include user in request body for DELETE if available
             });
         } catch (error) {
             const axiosError = error as AxiosError;

@@ -12,6 +12,8 @@ interface PortfolioContentProps {
     showGraph: boolean;
     onEdit: (entry: PortfolioEntry) => void;
     onDelete: (entryId: string) => void;
+    showActions?: boolean;
+    showMemberName?: boolean;
 }
 
 export const PortfolioContent: React.FC<PortfolioContentProps> = ({
@@ -22,7 +24,9 @@ export const PortfolioContent: React.FC<PortfolioContentProps> = ({
     loading,
     showGraph,
     onEdit,
-    onDelete
+    onDelete,
+    showActions = true,
+    showMemberName = false
 }) => {
     return (
         <>
@@ -33,13 +37,14 @@ export const PortfolioContent: React.FC<PortfolioContentProps> = ({
                     groupBy={groupBy} 
                     selectedCurrency={selectedCurrency} 
                 />
-            )}
-            <PortfolioTable 
+            )}            <PortfolioTable 
                 entries={entries} 
                 onEdit={onEdit} 
                 onDelete={onDelete} 
                 selectedCurrency={selectedCurrency} 
-                loading={loading} 
+                loading={loading}
+                showActions={showActions}
+                showMemberName={showMemberName}
             />
         </>
     );

@@ -61,14 +61,8 @@ apiClient.interceptors.response.use(
 
 export const accountApi = {    createAccount: async (account: Omit<PortfolioAccount, 'id' | 'userId'>): Promise<PortfolioAccount> => {
         try {
-            // Log the request being made for debugging
-            console.log('Creating account with data:', account);
-            // Extra debug logging for cookies and CSRF
-            console.log('CSRF token from cookie:', getCsrfToken());
-            
             // Fix: remove the trailing slash to prevent double slashes
             const response = await apiClient.post<PortfolioAccount>('', account);
-            console.log('Account created successfully:', response.data);
             return response.data;
         } catch (error) {
             const axiosError = error as AxiosError;

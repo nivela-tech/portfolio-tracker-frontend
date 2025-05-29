@@ -64,24 +64,15 @@ export const PortfolioViewPage: React.FC = () => {
             return JSON.stringify(err);
         }
         return 'An unexpected error occurred';
-    };
-
-    useEffect(() => {
+    };    useEffect(() => {
         // Ensure all accounts data is loaded on component mount
-        console.log('Loading all accounts data on mount.');
         loadAllAccountsData();
     }, []); // Empty dependency array ensures this runs only once
 
     useEffect(() => {
-        // Log the routeAccountId and isCombinedView for debugging
-        console.log('Route Account ID:', routeAccountId);
-        console.log('Is Combined View:', isCombinedView);
-
         // Load data when the component mounts or when routeAccountId changes
         loadData();
-    }, [routeAccountId]);
-
-    const handleAddEntry = async (entry: Omit<PortfolioEntry, 'id' | 'accountId' | 'userId'>) => {
+    }, [routeAccountId]);const handleAddEntry = async (entry: Omit<PortfolioEntry, 'id' | 'accountId' | 'userId'>) => {
         try {
             const currentAccountId = routeAccountId;
             if (currentAccountId === undefined && !isCombinedView) {
@@ -94,33 +85,51 @@ export const PortfolioViewPage: React.FC = () => {
                 throw new Error('User is not authenticated');
             }
             await portfolioApi.addEntry(entryData as Omit<PortfolioEntry, 'id' | 'userId'>, user.email);
-            loadData();
+            
+            // Update both current view data and all accounts data to ensure net worth is recalculated
+            await loadData();
+            await loadAllAccountsData();  // Added to update accountEntries for net worth calculation
+            
             setIsAddDialogOpen(false);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to add entry';
             console.error(message);
         }
-    };
-
-    const handleEditEntry = async (entry: PortfolioEntry) => {
-        try {
-            const updatedEntry = await portfolioApi.updateEntry(entry.id, entry);
-            loadData();
+    };    const handleEditEntry = async (entry: PortfolioEntry) => {
+        try {            if (!user) {
+                throw new Error('User is not authenticated');
+            }
+              // Add user email to the entry object
+            entry.user = { email: user.email };
+            
+            await portfolioApi.updateEntry(entry.id, entry);
+            
+            // Update both current view data and all accounts data to ensure net worth is recalculated
+            await loadData();
+            await loadAllAccountsData();  // Added to update accountEntries for net worth calculation
+            
             setIsEditDialogOpen(false);
             setSelectedEntry(null);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to update entry';
-            console.error(message);
+            console.error('Error updating entry:', message);
+            setError(`Failed to update entry: ${message}`);
         }
-    };
-
-    const handleDeleteEntry = async (entryId: string) => {
-        try {
-            await portfolioApi.deleteEntry(entryId);
-            loadData();
+    };const handleDeleteEntry = async (entryId: string) => {
+        try {            if (!user) {
+                throw new Error('User is not authenticated');
+            }
+            
+            await portfolioApi.deleteEntry(entryId, user.email);
+            
+            // Update both current view data and all accounts data to ensure net worth is recalculated
+            await loadData();
+            await loadAllAccountsData();  // Added to update accountEntries for net worth calculation
+            
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to delete entry';
-            console.error(message);
+            console.error('Error deleting entry:', message);
+            setError(`Failed to delete entry: ${message}`);
         }
     };
 
@@ -305,17 +314,17 @@ export const PortfolioViewPage: React.FC = () => {
                     groupBy={groupBy} 
                     setGroupBy={setGroupBy} 
                 />
-            )}
-
-            <PortfolioContent 
+            )}            <PortfolioContent 
                 entries={entries} 
                 chartType={chartType} 
                 groupBy={groupBy} 
                 selectedCurrency={selectedCurrency} 
                 loading={loading} 
                 showGraph={showGraph} 
-                onEdit={isCombinedView ? () => {} : handleEditEntry} 
-                onDelete={isCombinedView ? () => {} : handleDeleteEntry} 
+                onEdit={isCombinedView ? () => {} : handleEdit} 
+                onDelete={isCombinedView ? () => {} : handleDelete} 
+                showActions={!isCombinedView}
+                showMemberName={isCombinedView} 
             />
 
             {/* Add Entry Button */}
@@ -332,8 +341,7 @@ export const PortfolioViewPage: React.FC = () => {
                 </Zoom>
             )}
 
-            {/* Entry Dialogs Component */}
-            <EntryDialogs 
+            {/* Entry Dialogs Component */}            <EntryDialogs 
                 user={!!user} 
                 isAddDialogOpen={isAddDialogOpen} 
                 setIsAddDialogOpen={setIsAddDialogOpen} 
@@ -342,7 +350,8 @@ export const PortfolioViewPage: React.FC = () => {
                 selectedEntry={selectedEntry} 
                 loadData={loadData} 
                 setSelectedEntry={setSelectedEntry} 
-                handleAddEntry={handleAddEntry} // Pass handleAddEntry to EntryDialogs
+                handleAddEntry={handleAddEntry}
+                handleEditEntry={handleEditEntry}
             />
         </Container>
     );
