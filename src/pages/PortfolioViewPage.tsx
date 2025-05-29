@@ -238,11 +238,6 @@ export const PortfolioViewPage: React.FC = () => {
                 </Snackbar>
             )}
 
-            <Stack direction="row" spacing={2} alignItems="center" mb={2} justifyContent="space-between">
-                <Typography variant="h4" component="h1" gutterBottom sx={{ flexGrow: 1 }}>
-                    {isCombinedView ? 'Portfolio Overview' : (account ? `${account.name} Overview` : 'Loading Account...')}
-                </Typography>
-            </Stack>
 
             <NetWorthSection 
                 totalNetWorth={currentNetWorth}
@@ -255,7 +250,6 @@ export const PortfolioViewPage: React.FC = () => {
 
             {isCombinedView && (
                 <Box sx={{ mb: 3, mt: 3 }}>
-                    <Typography variant="h5" gutterBottom>All Accounts</Typography>
                     {allAccounts.length > 0 ? (
                         <AccountList 
                             accounts={allAccounts} 
