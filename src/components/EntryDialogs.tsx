@@ -30,8 +30,7 @@ export const EntryDialogs: React.FC<EntryDialogsProps> = ({
 }) => (
     <>
 
-        {/* Add Entry Dialog */}
-        <Dialog
+        {/* Add Entry Dialog */}        <Dialog
             open={isAddDialogOpen}
             onClose={() => setIsAddDialogOpen(false)}
             maxWidth="sm"
@@ -43,15 +42,16 @@ export const EntryDialogs: React.FC<EntryDialogsProps> = ({
                     loadData();
                     setIsAddDialogOpen(false);
                 }} 
-                onCancel={() => setIsAddDialogOpen(false)} 
+                onCancel={() => setIsAddDialogOpen(false)}
+                inDialog={true}
             />
-        </Dialog>        {/* Edit Entry Dialog */}
-        <Dialog
+        </Dialog>{/* Edit Entry Dialog */}        <Dialog
             open={isEditDialogOpen}
             onClose={() => setIsEditDialogOpen(false)}
             maxWidth="sm"
             fullWidth
-        >            <AddEntryForm 
+        >
+            <AddEntryForm 
                 entry={selectedEntry} 
                 onSubmit={handleEditEntry}
                 isEdit={true} 
@@ -63,7 +63,8 @@ export const EntryDialogs: React.FC<EntryDialogsProps> = ({
                 onCancel={() => {
                     setIsEditDialogOpen(false);
                     setSelectedEntry(null);
-                }} 
+                }}
+                inDialog={true}
             />
         </Dialog>
     </>

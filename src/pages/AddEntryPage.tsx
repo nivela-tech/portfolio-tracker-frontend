@@ -1,8 +1,9 @@
 import React from 'react';
-import { Paper, Typography, Container, Button, CircularProgress } from '@mui/material';
+import { Paper, Typography, Container, Button } from '@mui/material';
 import { AddEntryForm } from '../components/AddEntryForm';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/Layout';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export const AddEntryPage: React.FC = () => {
   const { accountId } = useParams<{ accountId: string }>();
@@ -16,11 +17,10 @@ export const AddEntryPage: React.FC = () => {
         navigate('/portfolio');
     }
   };
-
   if (authLoading) {
     return (
         <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-            <CircularProgress />
+            <LoadingSpinner variant="component" message="Loading entry form..." />
         </Container>
     );
   }

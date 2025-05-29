@@ -7,9 +7,6 @@ import {
     Box,
     IconButton,
     Collapse,
-    Alert,
-    Snackbar,
-    CircularProgress,
     Container,
     Stack,
     Tooltip,
@@ -30,6 +27,8 @@ import { PortfolioEntry, PortfolioAccount } from '../types/portfolio';
 import { PortfolioTable } from '../components/PortfolioTable';
 import { PortfolioChart } from '../components/PortfolioChart';
 import { AddEntryForm } from '../components/AddEntryForm';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { ErrorDisplay } from '../components/ErrorDisplay';
 import { portfolioApi } from '../services/portfolioApi';
 import { accountApi } from '../services/accountApi';
 import { NetWorthBox } from '../components/NetWorthBox';
@@ -200,12 +199,10 @@ export const PortfolioViewPage: React.FC = () => {
 
     const handleDelete = (entryId: string) => {
         handleDeleteEntry(entryId);
-    };
-
-    if (authLoading) {
+    };    if (authLoading) {
         return (
             <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-                <CircularProgress />
+                <LoadingSpinner variant="component" message="Loading portfolio..." />
             </Container>
         );
     }
@@ -231,21 +228,13 @@ export const PortfolioViewPage: React.FC = () => {
         ? calculateTotalNetWorth() 
         : (routeAccountId ? calculateAccountNetWorth(routeAccountId) : 0);    return (
         <Container maxWidth="xl" sx={{ mt: isMobile ? 2 : 4, mb: isMobile ? 2 : 4, px: isMobile ? 1 : 3 }}>
-            {error && (
-                <Snackbar
-                    open={!!error}
-                    autoHideDuration={6000}
-                    onClose={handleCloseError}
-                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                >
-                    <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
-                        {error}
-                    </Alert>
-                </Snackbar>
-            )}
-
-
-            <NetWorthSection 
+            <ErrorDisplay
+                error={error}
+                variant="snackbar"
+                severity="error"
+                onClose={handleCloseError}
+                onRetry={() => loadData()}
+            />            <NetWorthSection 
                 totalNetWorth={currentNetWorth}
                 selectedCurrency={selectedCurrency}
                 onCurrencyChange={setSelectedCurrency as (currency: string) => void}

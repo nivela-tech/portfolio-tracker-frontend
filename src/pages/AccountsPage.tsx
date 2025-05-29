@@ -3,9 +3,6 @@ import {
     Paper,
     Typography,
     Box,
-    Alert,
-    Snackbar,
-    CircularProgress,
     Button,
     Container,
     Fab,
@@ -28,6 +25,8 @@ import { useNavigate } from 'react-router-dom';
 import { PortfolioAccount } from '../types/portfolio';
 import { accountApi } from '../services/accountApi';
 import { useAuth } from '../components/Layout';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { ErrorDisplay } from '../components/ErrorDisplay';
 
 export const AccountsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -150,10 +149,9 @@ export const AccountsPage: React.FC = () => {
         setError(message);
     }
 };
-
   const renderAccounts = () => {
     if (loading) {
-      return <CircularProgress />;
+      return <LoadingSpinner variant="component" message="Loading accounts..." />;
     }
 
     if (accounts.length === 0) {
@@ -168,7 +166,7 @@ export const AccountsPage: React.FC = () => {
           </Button>
         </Box>
       );
-    }    return (
+    }return (
       <AccountsTable
         accounts={accounts}
         onAccountClick={handleAccountSelect}
@@ -176,11 +174,10 @@ export const AccountsPage: React.FC = () => {
       />
     );
   };
-
   if (authLoading) {
     return (
         <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-            <CircularProgress />
+            <LoadingSpinner variant="component" message="Loading accounts..." />
         </Container>
     );
   }
@@ -262,28 +259,22 @@ export const AccountsPage: React.FC = () => {
         <DialogActions>
           <Button onClick={handleDeleteCancel} color="primary" disabled={deleteLoading}>
             Cancel
-          </Button>
-          <Button 
+          </Button>          <Button 
             onClick={handleDeleteConfirm} 
             color="error"
             disabled={deleteLoading}
-            startIcon={deleteLoading ? <CircularProgress size={20} /> : null}
+            startIcon={deleteLoading ? <LoadingSpinner variant="minimal" size="small" /> : null}
           >
             {deleteLoading ? "Deleting..." : "Delete"}
           </Button>
         </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={!!error}
-        autoHideDuration={6000}
+      </Dialog>      <ErrorDisplay
+        error={error}
+        variant="snackbar"
+        severity="error"
         onClose={handleCloseError}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
-          {error}
-        </Alert>
-      </Snackbar>
+        onRetry={handleRetry}
+      />
     </Paper>
   );
 };

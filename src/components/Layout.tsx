@@ -15,7 +15,6 @@ import {
   useMediaQuery,
   Stack,
   Button,
-  CircularProgress,
   Avatar,
 } from '@mui/material';
 import { accountApi } from '../services/accountApi';
@@ -25,12 +24,14 @@ import {
   People as PeopleIcon,
   Brightness4 as Brightness4Icon,
   Brightness7 as Brightness7Icon,
-  Dashboard as DashboardIcon, // Added for Portfolio
-  AccountBalanceWallet as AccountBalanceWalletIcon, // Added for Accounts
+  BusinessCenter as BusinessCenterIcon, // Better for Portfolio (business/investment portfolio)
+  Analytics as AnalyticsIcon, // Even better for Performance/Analytics
+  AccountBalance as AccountBalanceIcon, // Better for bank accounts
   ExitToApp as ExitToAppIcon, // Added for Logout
   Login as LoginIcon, // Added for Login
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet, Link as RouterLink } from 'react-router-dom';
+import { LoadingSpinner } from './LoadingSpinner';
 
 // Define User type for frontend
 interface User {
@@ -190,12 +191,9 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
       navigate('/');
     }
   }, [authLoading, isAuthenticated, navigate, location.pathname]);
-
   if (authLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <LoadingSpinner variant="page" message="Securing your session..." showIcon={true} />
     );
   }
 
@@ -208,40 +206,222 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
     return null; 
   }  const drawer = (
     <Box>
-      <Toolbar /> 
-      <List sx={{ px: isMobile ? 1 : 0 }}>
-        <ListItemButton 
-          component={RouterLink} 
-          to="/portfolio" 
-          selected={location.pathname.startsWith('/portfolio')}
-          onClick={handleDrawerClose}
+      <Toolbar sx={{ 
+        minHeight: { xs: 64, md: 70 },
+        background: theme.palette.mode === 'dark' 
+          ? 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
+          : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+        borderBottom: `1px solid ${theme.palette.mode === 'dark' ? '#334155' : '#e5e7eb'}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: 2
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            sx={{
+              p: 1,
+              borderRadius: 2,
+              backgroundColor: theme.palette.mode === 'dark' 
+                ? 'rgba(59, 130, 246, 0.1)' 
+                : 'rgba(21, 101, 192, 0.1)',
+            }}
+          >
+            <AccountBalanceIcon 
+              sx={{ 
+                color: theme.palette.primary.main,
+                fontSize: 20
+              }}
+            />
+          </Box>
+          <Typography 
+            variant="subtitle1" 
+            sx={{ 
+              fontWeight: 700,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Portfolio
+          </Typography>
+        </Box>
+      </Toolbar>
+      
+      <Box sx={{ 
+        p: 2, 
+        height: 'calc(100vh - 70px)',
+        background: theme.palette.mode === 'dark' 
+          ? 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)'
+          : 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+      }}>
+        <Typography 
+          variant="overline" 
           sx={{ 
-            borderRadius: isMobile ? 1 : 0,
-            mb: isMobile ? 0.5 : 0,
-            minHeight: isMobile ? 48 : 40,
+            color: theme.palette.text.secondary,
+            fontWeight: 600,
+            letterSpacing: 1.2,
+            fontSize: '0.7rem',
+            px: 2,
+            mb: 2,
+            display: 'block'
           }}
         >
-          <ListItemIcon><DashboardIcon /></ListItemIcon>
-          <ListItemText primary="Portfolio" />
-        </ListItemButton>        
-        <ListItemButton 
-          component={RouterLink} 
-          to="/accounts" 
-          selected={location.pathname.startsWith('/accounts')}
-          onClick={handleDrawerClose}
-          sx={{ 
-            borderRadius: isMobile ? 1 : 0,
-            mb: isMobile ? 0.5 : 0,
-            minHeight: isMobile ? 48 : 40,
-          }}
-        >
-          <ListItemIcon><AccountBalanceWalletIcon /></ListItemIcon>
-          <ListItemText primary="Accounts" />
-        </ListItemButton>
-      </List>
+          Navigation
+        </Typography>
+        
+        <List sx={{ px: 0 }}>
+          <ListItemButton 
+            component={RouterLink} 
+            to="/portfolio" 
+            selected={location.pathname.startsWith('/portfolio')}
+            onClick={handleDrawerClose}
+            sx={{ 
+              borderRadius: 2,
+              mb: 1,
+              minHeight: isMobile ? 48 : 44,
+              px: 2,
+              py: 1.5,
+              '&.Mui-selected': {
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(59, 130, 246, 0.12)'
+                  : 'rgba(21, 101, 192, 0.08)',
+                borderLeft: `3px solid ${theme.palette.primary.main}`,
+                '&:hover': {
+                  backgroundColor: theme.palette.mode === 'dark' 
+                    ? 'rgba(59, 130, 246, 0.16)'
+                    : 'rgba(21, 101, 192, 0.12)',
+                },
+              },
+              '&:hover': {
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(59, 130, 246, 0.04)'
+                  : 'rgba(21, 101, 192, 0.04)',
+                transform: 'translateX(4px)',
+                transition: 'all 0.2s ease',
+              },
+            }}
+          >            <ListItemIcon sx={{ minWidth: 40 }}>
+              <BusinessCenterIcon sx={{ color: location.pathname.startsWith('/portfolio') ? theme.palette.primary.main : theme.palette.text.secondary }} />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Portfolio" 
+              primaryTypographyProps={{
+                fontWeight: location.pathname.startsWith('/portfolio') ? 600 : 500,
+                fontSize: '0.875rem'
+              }}
+            />          </ListItemButton>
+          
+          <ListItemButton 
+            component={RouterLink} 
+            to="/performance" 
+            selected={location.pathname.startsWith('/performance')}
+            onClick={handleDrawerClose}
+            sx={{ 
+              borderRadius: 2,
+              mb: 1,
+              minHeight: isMobile ? 48 : 44,
+              px: 2,
+              py: 1.5,
+              '&.Mui-selected': {
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(59, 130, 246, 0.12)'
+                  : 'rgba(21, 101, 192, 0.08)',
+                borderLeft: `3px solid ${theme.palette.primary.main}`,
+                '&:hover': {
+                  backgroundColor: theme.palette.mode === 'dark' 
+                    ? 'rgba(59, 130, 246, 0.16)'
+                    : 'rgba(21, 101, 192, 0.12)',
+                },
+              },
+              '&:hover': {
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(59, 130, 246, 0.04)'
+                  : 'rgba(21, 101, 192, 0.04)',
+                transform: 'translateX(4px)',
+                transition: 'all 0.2s ease',
+              },
+            }}
+          >            <ListItemIcon sx={{ minWidth: 40 }}>
+              <AnalyticsIcon sx={{ color: location.pathname.startsWith('/performance') ? theme.palette.primary.main : theme.palette.text.secondary }} />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Performance" 
+              primaryTypographyProps={{
+                fontWeight: location.pathname.startsWith('/performance') ? 600 : 500,
+                fontSize: '0.875rem'
+              }}
+            />
+          </ListItemButton>
+          
+          <ListItemButton
+            component={RouterLink} 
+            to="/accounts" 
+            selected={location.pathname.startsWith('/accounts')}
+            onClick={handleDrawerClose}
+            sx={{ 
+              borderRadius: 2,
+              mb: 1,
+              minHeight: isMobile ? 48 : 44,
+              px: 2,
+              py: 1.5,
+              '&.Mui-selected': {
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(59, 130, 246, 0.12)'
+                  : 'rgba(21, 101, 192, 0.08)',
+                borderLeft: `3px solid ${theme.palette.primary.main}`,
+                '&:hover': {
+                  backgroundColor: theme.palette.mode === 'dark' 
+                    ? 'rgba(59, 130, 246, 0.16)'
+                    : 'rgba(21, 101, 192, 0.12)',
+                },
+              },
+              '&:hover': {
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(59, 130, 246, 0.04)'
+                  : 'rgba(21, 101, 192, 0.04)',
+                transform: 'translateX(4px)',
+                transition: 'all 0.2s ease',
+              },
+            }}
+          >            <ListItemIcon sx={{ minWidth: 40 }}>
+              <AccountBalanceIcon sx={{ color: location.pathname.startsWith('/accounts') ? theme.palette.primary.main : theme.palette.text.secondary }} />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Accounts" 
+              primaryTypographyProps={{
+                fontWeight: location.pathname.startsWith('/accounts') ? 600 : 500,
+                fontSize: '0.875rem'
+              }}
+            />
+          </ListItemButton>
+        </List>
+
+        {/* Professional footer in sidebar */}
+        <Box sx={{ 
+          position: 'absolute', 
+          bottom: 16, 
+          left: 16, 
+          right: 16,
+          p: 2,
+          borderRadius: 2,
+          backgroundColor: theme.palette.mode === 'dark' 
+            ? 'rgba(15, 23, 42, 0.5)'
+            : 'rgba(248, 250, 252, 0.8)',
+          border: `1px solid ${theme.palette.mode === 'dark' ? '#334155' : '#e5e7eb'}`,
+        }}>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.7rem' }}>
+            Professional Portfolio Management
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.65rem', mt: 0.5 }}>
+            v2.0 - Bank Level Security
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
-
   return (
     <Box sx={{ display: 'flex' }}>
       <AppBar
@@ -249,40 +429,170 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
         sx={{
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
+          background: theme.palette.mode === 'dark' 
+            ? 'linear-gradient(135deg, #1e293b 0%, #334155 100%)'
+            : 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          backdropFilter: 'blur(10px)',
+          borderBottom: `1px solid ${theme.palette.mode === 'dark' ? '#334155' : '#e5e7eb'}`,
+          boxShadow: theme.palette.mode === 'dark'
+            ? '0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4)'
+            : '0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.12)',
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ minHeight: { xs: 64, md: 70 } }}>
           {isMobile && (
             <IconButton
               color="inherit"
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { md: 'none' } }}
+              sx={{ 
+                mr: 2, 
+                display: { md: 'none' },
+                p: 1.5,
+                borderRadius: 2,
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(59, 130, 246, 0.1)' 
+                  : 'rgba(21, 101, 192, 0.1)',
+                '&:hover': {
+                  backgroundColor: theme.palette.mode === 'dark' 
+                    ? 'rgba(59, 130, 246, 0.2)' 
+                    : 'rgba(21, 101, 192, 0.2)',
+                }
+              }}
             >
               <MenuIcon />
             </IconButton>
-          )}          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontSize: isMobile ? '1.1rem' : '1.25rem' }}>
-            Portfolio Tracker
-          </Typography>
-          <IconButton sx={{ ml: 1 }} onClick={toggleTheme} color="inherit" size={isMobile ? "medium" : "large"}>
-            {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-          </IconButton>
-          {user && (
-            <Stack direction="row" spacing={isMobile ? 0.5 : 1} alignItems="center" sx={{ ml: isMobile ? 1 : 2 }}>
-              {user.imageUrl && <Avatar alt={user.name} src={user.imageUrl} sx={{ width: isMobile ? 28 : 32, height: isMobile ? 28 : 32 }} />}
-              {!isMobile && <Typography variant="subtitle1">{user.name}</Typography>}
-              <Button 
-                color="inherit" 
-                onClick={logout} 
-                startIcon={!isMobile ? <ExitToAppIcon /> : undefined}
-                size={isMobile ? "small" : "medium"}
-                sx={{ minWidth: isMobile ? 'auto' : undefined, px: isMobile ? 1 : undefined }}
-              >
-                {isMobile ? <ExitToAppIcon /> : 'Logout'}
-              </Button>
-            </Stack>
           )}
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                p: 1,
+                borderRadius: 2,
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(59, 130, 246, 0.1)' 
+                  : 'rgba(21, 101, 192, 0.08)',
+              }}
+            >
+              <AccountBalanceIcon 
+                sx={{ 
+                  color: theme.palette.primary.main,
+                  fontSize: isMobile ? 20 : 24 
+                }}
+              />
+              <Typography 
+                variant="h6" 
+                noWrap 
+                component="div" 
+                sx={{ 
+                  flexGrow: 1, 
+                  fontSize: isMobile ? '1.1rem' : '1.25rem',
+                  fontWeight: 700,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Portfolio Tracker
+              </Typography>
+            </Box>
+          </Box>
+
+          <Stack direction="row" spacing={1} alignItems="center">
+            <IconButton 
+              sx={{ 
+                ml: 1,
+                p: 1.5,
+                borderRadius: 2,
+                backgroundColor: theme.palette.mode === 'dark' 
+                  ? 'rgba(148, 163, 184, 0.1)' 
+                  : 'rgba(107, 114, 128, 0.1)',
+                '&:hover': {
+                  backgroundColor: theme.palette.mode === 'dark' 
+                    ? 'rgba(148, 163, 184, 0.2)' 
+                    : 'rgba(107, 114, 128, 0.2)',
+                }
+              }} 
+              onClick={toggleTheme} 
+              color="inherit" 
+              size={isMobile ? "medium" : "large"}
+            >
+              {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+            </IconButton>
+            
+            {user && (
+              <Stack direction="row" spacing={isMobile ? 0.5 : 1} alignItems="center" sx={{ ml: isMobile ? 1 : 2 }}>
+                {user.imageUrl && (
+                  <Avatar 
+                    alt={user.name} 
+                    src={user.imageUrl} 
+                    sx={{ 
+                      width: isMobile ? 32 : 36, 
+                      height: isMobile ? 32 : 36,
+                      border: `2px solid ${theme.palette.primary.main}`,
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? '0 4px 6px rgba(0, 0, 0, 0.3)'
+                        : '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    }} 
+                  />
+                )}
+                {!isMobile && (
+                  <Box>
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        fontWeight: 600,
+                        lineHeight: 1.2,
+                        color: theme.palette.text.primary
+                      }}
+                    >
+                      {user.name}
+                    </Typography>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: theme.palette.text.secondary,
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      Portfolio Manager
+                    </Typography>
+                  </Box>
+                )}
+                <Button 
+                  color="inherit" 
+                  onClick={logout} 
+                  startIcon={!isMobile ? <ExitToAppIcon /> : undefined}
+                  size={isMobile ? "small" : "medium"}
+                  sx={{ 
+                    minWidth: isMobile ? 'auto' : undefined, 
+                    px: isMobile ? 1 : 2,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    backgroundColor: theme.palette.mode === 'dark' 
+                      ? 'rgba(239, 68, 68, 0.1)' 
+                      : 'rgba(220, 38, 38, 0.1)',
+                    color: theme.palette.mode === 'dark' 
+                      ? '#f87171' 
+                      : '#dc2626',
+                    '&:hover': {
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(239, 68, 68, 0.2)' 
+                        : 'rgba(220, 38, 38, 0.2)',
+                    }
+                  }}
+                >
+                  {isMobile ? <ExitToAppIcon /> : 'Logout'}
+                </Button>
+              </Stack>
+            )}
+          </Stack>
         </Toolbar>
       </AppBar>
       <Box
