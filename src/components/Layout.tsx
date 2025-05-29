@@ -158,6 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
 const drawerWidth = 240;
+const mobileDrawerWidth = 280; // Slightly wider on mobile for better touch targets
 
 interface LayoutProps {
   toggleTheme: () => void;
@@ -173,9 +174,14 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
   const [mobileOpen, setMobileOpen] = React.useState(false);
   // const [account, setAccount] = React.useState<PortfolioAccount | null>(null); // Account fetching might be page-specific
   const { user, logout, authLoading, isAuthenticated } = useAuth();
-
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleDrawerClose = () => {
+    if (isMobile) {
+      setMobileOpen(false);
+    }
   };
 
   // Redirect to landing if not authenticated and not loading
@@ -200,16 +206,35 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
      // This will be handled by ProtectedRoute, so this part of Layout might not be strictly necessary
      // if all routes using Layout are protected.
     return null; 
-  }
-
-  const drawer = (
+  }  const drawer = (
     <Box>
       <Toolbar /> 
-      <List>
-        <ListItemButton component={RouterLink} to="/portfolio" selected={location.pathname.startsWith('/portfolio')}>
+      <List sx={{ px: isMobile ? 1 : 0 }}>
+        <ListItemButton 
+          component={RouterLink} 
+          to="/portfolio" 
+          selected={location.pathname.startsWith('/portfolio')}
+          onClick={handleDrawerClose}
+          sx={{ 
+            borderRadius: isMobile ? 1 : 0,
+            mb: isMobile ? 0.5 : 0,
+            minHeight: isMobile ? 48 : 40,
+          }}
+        >
           <ListItemIcon><DashboardIcon /></ListItemIcon>
           <ListItemText primary="Portfolio" />
-        </ListItemButton>        <ListItemButton component={RouterLink} to="/accounts" selected={location.pathname.startsWith('/accounts')}>
+        </ListItemButton>        
+        <ListItemButton 
+          component={RouterLink} 
+          to="/accounts" 
+          selected={location.pathname.startsWith('/accounts')}
+          onClick={handleDrawerClose}
+          sx={{ 
+            borderRadius: isMobile ? 1 : 0,
+            mb: isMobile ? 0.5 : 0,
+            minHeight: isMobile ? 48 : 40,
+          }}
+        >
           <ListItemIcon><AccountBalanceWalletIcon /></ListItemIcon>
           <ListItemText primary="Accounts" />
         </ListItemButton>
@@ -237,19 +262,24 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
             >
               <MenuIcon />
             </IconButton>
-          )}
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          )}          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontSize: isMobile ? '1.1rem' : '1.25rem' }}>
             Portfolio Tracker
           </Typography>
-          <IconButton sx={{ ml: 1 }} onClick={toggleTheme} color="inherit">
+          <IconButton sx={{ ml: 1 }} onClick={toggleTheme} color="inherit" size={isMobile ? "medium" : "large"}>
             {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
           {user && (
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ ml: 2 }}>
-              {user.imageUrl && <Avatar alt={user.name} src={user.imageUrl} sx={{ width: 32, height: 32 }} />}
-              <Typography variant="subtitle1">{user.name}</Typography>
-              <Button color="inherit" onClick={logout} startIcon={<ExitToAppIcon />}>
-                Logout
+            <Stack direction="row" spacing={isMobile ? 0.5 : 1} alignItems="center" sx={{ ml: isMobile ? 1 : 2 }}>
+              {user.imageUrl && <Avatar alt={user.name} src={user.imageUrl} sx={{ width: isMobile ? 28 : 32, height: isMobile ? 28 : 32 }} />}
+              {!isMobile && <Typography variant="subtitle1">{user.name}</Typography>}
+              <Button 
+                color="inherit" 
+                onClick={logout} 
+                startIcon={!isMobile ? <ExitToAppIcon /> : undefined}
+                size={isMobile ? "small" : "medium"}
+                sx={{ minWidth: isMobile ? 'auto' : undefined, px: isMobile ? 1 : undefined }}
+              >
+                {isMobile ? <ExitToAppIcon /> : 'Logout'}
               </Button>
             </Stack>
           )}
@@ -266,22 +296,24 @@ export const Layout: React.FC<LayoutProps> = ({ toggleTheme, isDarkMode, childre
           onClose={handleDrawerToggle}
           ModalProps={{
             keepMounted: true, // Better open performance on mobile.
-          }}
-          sx={{
+          }}          sx={{
             display: { xs: 'block', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: isMobile ? mobileDrawerWidth : drawerWidth 
+            },
           }}
         >
           {drawer}
         </Drawer>
-      </Box>
-      <Box
+      </Box>      <Box
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          p: isMobile ? 2 : 3,
           width: { md: `calc(100% - ${drawerWidth}px)` },
           marginTop: '64px', // AppBar height
+          minHeight: 'calc(100vh - 64px)', // Full height minus AppBar
         }}
       >
         {/* <Toolbar />  This was causing double spacing, AppBar is fixed */} 

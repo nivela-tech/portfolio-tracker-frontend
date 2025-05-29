@@ -17,7 +17,9 @@ import {
     Zoom,
     Stack,
     IconButton,
-    Tooltip
+    Tooltip,
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { AddAccountForm } from '../components/AddAccountForm';
@@ -30,6 +32,8 @@ import { useAuth } from '../components/Layout';
 export const AccountsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, authLoading, login } = useAuth(); // Changed isLoading to authLoading
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [accounts, setAccounts] = useState<PortfolioAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -196,13 +200,12 @@ export const AccountsPage: React.FC = () => {
         </Container>
     );
   }
-
   return (
-    <Paper elevation={3} sx={{ p: 3, mb: 4, position: 'relative' }}>
-      <Typography variant="h5" component="h2" gutterBottom>
+    <Paper elevation={3} sx={{ p: isMobile ? 2 : 3, mb: isMobile ? 2 : 4, position: 'relative' }}>
+      <Typography variant={isMobile ? "h6" : "h5"} component="h2" gutterBottom>
         Manage Accounts
       </Typography>
-      <Box sx={{ mt: 3 }}>
+      <Box sx={{ mt: isMobile ? 2 : 3 }}>
         {renderAccounts()}
       </Box>
 
@@ -211,6 +214,12 @@ export const AccountsPage: React.FC = () => {
         onClose={() => setIsAddDialogOpen(false)}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            margin: isMobile ? 1 : 3,
+            width: isMobile ? 'calc(100% - 16px)' : undefined
+          }
+        }}
       >
         <AddAccountForm onAccountAdded={handleAccountAdded} onCancel={() => setIsAddDialogOpen(false)} />
       </Dialog>
@@ -220,13 +229,20 @@ export const AccountsPage: React.FC = () => {
             <Fab 
                 color="primary" 
                 aria-label="add account" 
-                sx={{ position: 'fixed', bottom: 16, right: 16 }} 
+                sx={{ 
+                  position: 'fixed', 
+                  bottom: isMobile ? 16 : 16, 
+                  right: isMobile ? 16 : 16,
+                  width: isMobile ? 48 : 56,
+                  height: isMobile ? 48 : 56
+                }} 
                 onClick={() => setIsAddDialogOpen(true)}
+                size={isMobile ? "medium" : "large"}
             >
                 <AddIcon />
             </Fab>
         </Zoom>
-      )}      {/* Delete Confirmation Dialog */}
+      )}{/* Delete Confirmation Dialog */}
       <Dialog
         open={isDeleteDialogOpen}
         onClose={handleDeleteCancel}

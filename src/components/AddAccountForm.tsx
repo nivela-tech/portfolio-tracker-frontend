@@ -14,7 +14,9 @@ import {
     MenuItem,
     FormControl,
     InputLabel,
-    FormHelperText
+    FormHelperText,
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
 import { PortfolioAccount } from '../types/portfolio';
 import { accountApi } from '../services/accountApi';
@@ -26,6 +28,8 @@ interface AddAccountFormProps {
 }
 
 export const AddAccountForm: React.FC<AddAccountFormProps> = ({ onAccountAdded, onCancel }) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [account, setAccount] = useState<Omit<PortfolioAccount, 'id'>>({
         name: '',
         relationship: 'Self' // Default to Self
@@ -112,9 +116,12 @@ export const AddAccountForm: React.FC<AddAccountFormProps> = ({ onAccountAdded, 
                         </Typography>
                     )}
                 </Stack>
-            </DialogContent>
-            <DialogActions sx={{ padding: '16px 24px' }}> {/* Added padding */}
-                <Button onClick={onCancel} color="inherit"> {/* Standard cancel button */}
+            </DialogContent>            <DialogActions sx={{ 
+                padding: isMobile ? '16px' : '16px 24px',
+                flexDirection: isMobile ? "column" : "row",
+                gap: isMobile ? 1 : 0
+            }}>
+                <Button onClick={onCancel} color="inherit" fullWidth={isMobile}>
                     Cancel
                 </Button>
                 <Button
@@ -122,7 +129,8 @@ export const AddAccountForm: React.FC<AddAccountFormProps> = ({ onAccountAdded, 
                     variant="contained"
                     color="primary"
                     disabled={loading}
-                    sx={{ minWidth: '120px' }} // Ensure button has a decent width
+                    sx={{ minWidth: isMobile ? 'auto' : '120px' }}
+                    fullWidth={isMobile}
                 >
                     {loading ? <CircularProgress size={24} color="inherit" /> : 'Add Account'}
                 </Button>

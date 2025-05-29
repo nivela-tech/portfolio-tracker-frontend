@@ -15,7 +15,9 @@ import {
     Tooltip,
     Fab,
     Zoom,
-    Button 
+    Button,
+    useTheme,
+    useMediaQuery 
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -44,6 +46,8 @@ export const PortfolioViewPage: React.FC = () => {
     const { accountId: routeAccountId } = useParams<{ accountId: string }>();
     const navigate = useNavigate();
     const { user, authLoading, login } = useAuth();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     const { account, entries, allAccounts, accountEntries, loading, error: apiError, loadData, loadAllAccountsData } = usePortfolioData(routeAccountId);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -225,10 +229,8 @@ export const PortfolioViewPage: React.FC = () => {
     // Main content rendering starts here
     const currentNetWorth = isCombinedView 
         ? calculateTotalNetWorth() 
-        : (routeAccountId ? calculateAccountNetWorth(routeAccountId) : 0);
-
-    return (
-        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+        : (routeAccountId ? calculateAccountNetWorth(routeAccountId) : 0);    return (
+        <Container maxWidth="xl" sx={{ mt: isMobile ? 2 : 4, mb: isMobile ? 2 : 4, px: isMobile ? 1 : 3 }}>
             {error && (
                 <Snackbar
                     open={!!error}
@@ -273,32 +275,49 @@ export const PortfolioViewPage: React.FC = () => {
                         </Box>
                     )}
                 </Box>
-            )}
-
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">
+            )}            <Stack 
+                direction={isMobile ? "column" : "row"} 
+                justifyContent="space-between" 
+                alignItems={isMobile ? "stretch" : "center"} 
+                mb={2}
+                spacing={isMobile ? 1 : 0}
+            >
+                <Typography variant="h6" sx={{ mb: isMobile ? 1 : 0 }}>
                     {isCombinedView ? 'Combined Entries' : `Entries for ${account?.name}`}
                 </Typography>
-                <Stack direction="row" spacing={1}>
+                <Stack 
+                    direction="row" 
+                    spacing={isMobile ? 0.5 : 1}
+                    flexWrap="wrap"
+                    justifyContent={isMobile ? "center" : "flex-end"}
+                >
                     <Tooltip title={showGraph ? "Hide Chart" : "Show Chart"}>
-                        <IconButton onClick={() => setShowGraph(!showGraph)}>
+                        <IconButton onClick={() => setShowGraph(!showGraph)} size={isMobile ? "small" : "medium"}>
                             {showGraph ? <VisibilityOffIcon /> : <VisibilityIcon />}
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Export as XLSX">
-                        <IconButton onClick={() => handleExport('xlsx')}>
+                        <IconButton onClick={() => handleExport('xlsx')} size={isMobile ? "small" : "medium"}>
                             <DescriptionIcon />
                         </IconButton>
                     </Tooltip>
                     <Tooltip title="Export as CSV">
-                        <IconButton onClick={() => handleExport('csv')}>
+                        <IconButton onClick={() => handleExport('csv')} size={isMobile ? "small" : "medium"}>
                             <TableChartIcon />
                         </IconButton>
                     </Tooltip>
                     {!isCombinedView && (
                         <Tooltip title="View Combined Portfolio">
-                            <Button variant="outlined" onClick={() => navigate('/portfolio')}>
-                                View Combined Accounts
+                            <Button 
+                                variant="outlined" 
+                                onClick={() => navigate('/portfolio')}
+                                size={isMobile ? "small" : "medium"}
+                                sx={{ 
+                                    minWidth: isMobile ? 'auto' : undefined,
+                                    fontSize: isMobile ? '0.75rem' : undefined
+                                }}
+                            >
+                                {isMobile ? "Combined" : "View Combined Accounts"}
                             </Button>
                         </Tooltip>
                     )}
@@ -323,16 +342,21 @@ export const PortfolioViewPage: React.FC = () => {
                 onDelete={isCombinedView ? () => {} : handleDelete} 
                 showActions={!isCombinedView}
                 showMemberName={isCombinedView} 
-            />
-
-            {/* Add Entry Button */}
+            />            {/* Add Entry Button */}
             {!isCombinedView && user && (
                 <Zoom in={true}>
                     <Fab 
                         color="primary" 
                         aria-label="add entry" 
-                        sx={{ position: 'fixed', bottom: 16, right: 16 }} 
+                        sx={{ 
+                            position: 'fixed', 
+                            bottom: isMobile ? 16 : 16, 
+                            right: isMobile ? 16 : 16,
+                            width: isMobile ? 48 : 56,
+                            height: isMobile ? 48 : 56
+                        }} 
                         onClick={() => setIsAddDialogOpen(true)}
+                        size={isMobile ? "medium" : "large"}
                     >
                         <AddIcon />
                     </Fab>

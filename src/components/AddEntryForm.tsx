@@ -7,7 +7,9 @@ import {
     TextField,
     MenuItem,
     Box,
-    Stack
+    Stack,
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
 import { PortfolioEntry } from '../types/portfolio';
 import { PORTFOLIO_TYPES, CURRENCIES, COUNTRIES } from '../utils/constants';
@@ -31,6 +33,8 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
     isEdit = false,
     user // Destructure user prop
 }) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [formData, setFormData] = useState<Partial<PortfolioEntry>>({
         type: 'STOCK',
         currency: 'USD',
@@ -70,9 +74,7 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev: Partial<PortfolioEntry>) => ({ ...prev, [name]: value }));
-    };
-
-    return (
+    };    return (
         <form onSubmit={handleSubmit}>
             <DialogTitle>
                 {isEdit ? 'Edit Entry' : 'Add New Entry'}
@@ -80,7 +82,7 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
             <DialogContent>
                 <Box sx={{ pt: 2 }}>
                     <Stack spacing={2}>
-                        <Stack direction="row" spacing={2}>
+                        <Stack direction={isMobile ? "column" : "row"} spacing={2}>
                             <TextField
                                 name="type"
                                 select
@@ -107,7 +109,7 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
                                 InputLabelProps={{ shrink: true }}
                             />
                         </Stack>
-                        <Stack direction="row" spacing={2}>
+                        <Stack direction={isMobile ? "column" : "row"} spacing={2}>
                             <TextField
                                 name="currency"
                                 select
@@ -132,9 +134,8 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
                                 fullWidth
                                 required
                                 inputProps={{ step: "0.01" }}
-                            />
-                        </Stack>
-                        <Stack direction="row" spacing={2}>
+                            />                        </Stack>
+                        <Stack direction={isMobile ? "column" : "row"} spacing={2}>
                             <TextField
                                 name="country"
                                 select
@@ -170,10 +171,9 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
                         />
                     </Stack>
                 </Box>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onCancel}>Cancel</Button>
-                <Button type="submit" variant="contained" color="primary">
+            </DialogContent>            <DialogActions sx={{ flexDirection: isMobile ? "column" : "row", gap: isMobile ? 1 : 0, p: isMobile ? 2 : 1 }}>
+                <Button onClick={onCancel} fullWidth={isMobile}>Cancel</Button>
+                <Button type="submit" variant="contained" color="primary" fullWidth={isMobile}>
                     {isEdit ? 'Save Changes' : 'Add Entry'}
                 </Button>
             </DialogActions>

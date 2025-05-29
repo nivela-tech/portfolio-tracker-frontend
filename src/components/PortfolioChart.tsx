@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, useTheme, useMediaQuery } from '@mui/material';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
 import { PortfolioEntry, ChartData } from '../types/portfolio';
@@ -20,6 +20,8 @@ export const PortfolioChart: React.FC<PortfolioChartProps> = ({
     groupBy,
     selectedCurrency 
 }) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const prepareChartData = (): ChartData => {
         if (!entries || entries.length === 0) {
             return {
@@ -87,15 +89,27 @@ export const PortfolioChart: React.FC<PortfolioChartProps> = ({
     };
 
     const chartData = prepareChartData();
-    
-    const baseOptions = {
+      const baseOptions = {
         maintainAspectRatio: false,
         responsive: true,
         plugins: {
             legend: {
-                position: 'top' as const,
+                position: isMobile ? 'bottom' as const : 'top' as const,
+                labels: {
+                    boxWidth: isMobile ? 12 : 20,
+                    padding: isMobile ? 10 : 20,
+                    font: {
+                        size: isMobile ? 10 : 12
+                    }
+                }
             },
             tooltip: {
+                titleFont: {
+                    size: isMobile ? 12 : 14
+                },
+                bodyFont: {
+                    size: isMobile ? 10 : 12
+                },
                 callbacks: {
                     label: (context: any) => {
                         const value = context.parsed.y ?? context.parsed;
@@ -109,12 +123,14 @@ export const PortfolioChart: React.FC<PortfolioChartProps> = ({
                             })}`
                         ];
                         
-                        Object.entries(memberDetails as Record<string, number>).forEach(([member, amount]) => {
-                            lines.push(`${member}: ${selectedCurrency} ${Number(amount).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            })}`);
-                        });
+                        if (!isMobile) {
+                            Object.entries(memberDetails as Record<string, number>).forEach(([member, amount]) => {
+                                lines.push(`${member}: ${selectedCurrency} ${Number(amount).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                })}`);
+                            });
+                        }
                         
                         return lines;
                     }
@@ -127,6 +143,9 @@ export const PortfolioChart: React.FC<PortfolioChartProps> = ({
             y: {
                 beginAtZero: true,
                 ticks: {
+                    font: {
+                        size: isMobile ? 10 : 12
+                    },
                     callback: function(this: any, value: number | string) {
                         if (typeof value === 'number') {
                             return `${selectedCurrency} ${value.toLocaleString(undefined, {
@@ -137,13 +156,25 @@ export const PortfolioChart: React.FC<PortfolioChartProps> = ({
                         return value;
                     }
                 }
+            },
+            x: {
+                ticks: {
+                    font: {
+                        size: isMobile ? 10 : 12
+                    },
+                    maxRotation: isMobile ? 45 : 0
+                }
             }
         },
         indexAxis: 'x' as const,
     };
 
     return (
-        <Box sx={{ width: '100%', height: 400 }}>
+        <Box sx={{ 
+            width: '100%', 
+            height: isMobile ? 300 : 400,
+            mb: isMobile ? 2 : 0
+        }}>
             {chartType === 'pie' ? (
                 <Pie data={chartData} options={baseOptions} />
             ) : (
