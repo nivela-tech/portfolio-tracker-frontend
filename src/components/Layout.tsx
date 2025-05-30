@@ -105,20 +105,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     fetchUser();
   }, []);
-
   const login = () => {
-    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
-  };
-
-  const logout = async () => {
+    window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/oauth2/authorization/google`;
+  };  const logout = async () => {
     try {
       const csrfToken = getCookie('XSRF-TOKEN');
       const headers: HeadersInit = {};
       if (csrfToken) {
         headers['X-XSRF-TOKEN'] = csrfToken;
       }
-
-      const response = await fetch('http://localhost:8080/logout', {
+      
+      const response = await fetch((process.env.REACT_APP_API_URL || 'http://localhost:8080') + '/logout', {
         method: 'POST',
         headers: headers,
       });
@@ -130,11 +127,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (response.redirected || response.url !== window.location.href) {
           // If redirected by backend, let the browser handle it.
           // If not, but URL implies logout (e.g. to landing), ensure frontend state is clear.
-          if (response.url.includes('logout=true') || response.url === 'http://localhost:3000/') {
+          if (response.url.includes('logout=true') || response.url.includes('/?logout=true')) {
             navigate('/');
           } else {
             // If backend logout didn't redirect to landing, force it.
-            window.location.href = 'http://localhost:3000/';
+            window.location.href = process.env.REACT_APP_FRONTEND_URL || 'http://localhost:3000/';
           }
         } else {
           // If no redirect from backend, manually navigate
