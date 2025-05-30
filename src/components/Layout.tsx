@@ -80,12 +80,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const navigate = useNavigate();
-
   useEffect(() => {
     const fetchUser = async () => {
       setAuthLoading(true);
       try {
-        const response = await fetch('/api/user/me');
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+        const response = await fetch(`${apiUrl}/api/user/me`, {
+          method: 'GET',
+          credentials: 'include', // Include cookies for session-based auth
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
         if (response.ok) {
           const userData = await response.json();
           if (userData && userData.id) { // Check if userData is not null and has id
@@ -94,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(null);
           }
         } else {
+          console.log('Response not ok:', response.status, response.statusText);
           setUser(null);
         }
       } catch (error) {
@@ -110,13 +117,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };  const logout = async () => {
     try {
       const csrfToken = getCookie('XSRF-TOKEN');
-      const headers: HeadersInit = {};
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
       if (csrfToken) {
         headers['X-XSRF-TOKEN'] = csrfToken;
       }
       
       const response = await fetch((process.env.REACT_APP_API_URL || 'http://localhost:8080') + '/logout', {
         method: 'POST',
+        credentials: 'include', // Include cookies for session-based auth
         headers: headers,
       });
       

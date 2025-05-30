@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosRequestHeaders } from 'axios';
 import { PortfolioEntry } from '../types/portfolio';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/portfolio';
+const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api/portfolio` : 'http://localhost:8080/api/portfolio';
 
 // Helper function to get CSRF token from cookies
 const getCsrfToken = (): string | null => {
