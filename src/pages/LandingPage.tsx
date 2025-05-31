@@ -136,6 +136,11 @@ const LandingPage: React.FC = () => {
       description: 'Get insights into your portfolio performance with advanced analytics and beautiful visualizations.'
     },
     {
+      icon: <FireIcon sx={{ fontSize: 40 }} />,
+      title: 'FIRE Calculator',
+      description: 'Plan your Financial Independence Retire Early journey with our comprehensive calculator. Track progress to freedom!'
+    },
+    {
       icon: <SecurityIcon sx={{ fontSize: 40 }} />,
       title: 'Secure & Private',
       description: 'Industry-leading security protects your data while you maintain complete control over your financial information.'
@@ -187,8 +192,21 @@ const LandingPage: React.FC = () => {
                 }}
               />
             </Box>
-            
-            <Stack direction="row" spacing={3} alignItems="center">
+              <Stack direction="row" spacing={3} alignItems="center">
+              <Button
+                color="inherit"
+                onClick={() => navigate('/fire-calculator')}
+                startIcon={<FireIcon />}
+                sx={{ 
+                  textTransform: 'none', 
+                  fontWeight: 500,
+                  '&:hover': {
+                    bgcolor: alpha('#ff6b35', 0.1)
+                  }
+                }}
+              >
+                FIRE Calculator
+              </Button>
               <Button
                 color="inherit"
                 onClick={() => setPrivacyDialogOpen(true)}
@@ -370,9 +388,34 @@ const LandingPage: React.FC = () => {
                             ? '0 15px 35px rgba(255, 107, 53, 0.4)'
                             : '0 15px 35px rgba(255, 107, 53, 0.4)'
                         }
+                      }}                    >
+                      🚀 Start Tracking Everything
+                    </Button>
+
+                    {/* Secondary CTA - FIRE Calculator */}
+                    <Button
+                      onClick={() => navigate('/fire-calculator')}
+                      variant="outlined"
+                      size="large"
+                      startIcon={<FireIcon />}
+                      sx={{
+                        py: 1.5,
+                        px: 3,
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        borderRadius: 3,
+                        borderColor: theme.palette.mode === 'dark' ? '#ff6b35' : '#ff6b35',
+                        color: theme.palette.mode === 'dark' ? '#ff6b35' : '#ff6b35',
+                        alignSelf: 'flex-start',
+                        '&:hover': {
+                          borderColor: theme.palette.mode === 'dark' ? '#e85a4f' : '#e85a4f',
+                          bgcolor: alpha('#ff6b35', 0.1),
+                          transform: 'translateY(-1px)'
+                        }
                       }}
                     >
-                      🚀 Start Tracking Everything
+                      Try FIRE Calculator (Free)
                     </Button>
 
                     {/* Legal Notice */}

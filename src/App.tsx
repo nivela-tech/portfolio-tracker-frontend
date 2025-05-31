@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 import { Layout, AuthProvider } from './components/Layout'; // Import AuthProvider
 import { useAuth } from './contexts/AuthContext';
@@ -11,6 +11,8 @@ import { PortfolioViewPage } from './pages/PortfolioViewPage';
 import { PerformancePage } from './pages/PerformancePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AddEntryPage } from './pages/AddEntryPage';
+import { FireCalculatorPage } from './pages/FireCalculatorPage';
+import { PublicFireCalculator } from './components/PublicFireCalculator';
 import LandingPage from './pages/LandingPage'; // Import LandingPage
 import './App.css';
 
@@ -606,13 +608,32 @@ const AppWithPreferences: React.FC = () => {
                   </Layout>
                 </ProtectedRoute>
               }
-            />
-            <Route
+            />            <Route
               path="/add-entry/:accountId"
               element={
                 <ProtectedRoute>
                   <Layout toggleTheme={toggleTheme} isDarkMode={preferences.isDarkMode}>
                     <AddEntryPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />            {/* Public FIRE Calculator Route - accessible without login */}
+            <Route
+              path="/fire-calculator"
+              element={
+                <ThemeProvider theme={preferences.isDarkMode ? darkTheme : lightTheme}>
+                  <CssBaseline />
+                  <PublicFireCalculator />
+                </ThemeProvider>
+              }
+            />
+            {/* Protected FIRE Calculator Route - for authenticated users */}
+            <Route
+              path="/tools/fire-calculator"
+              element={
+                <ProtectedRoute>
+                  <Layout toggleTheme={toggleTheme} isDarkMode={preferences.isDarkMode}>
+                    <FireCalculatorPage />
                   </Layout>
                 </ProtectedRoute>
               }
