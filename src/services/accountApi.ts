@@ -39,12 +39,34 @@ apiClient.interceptors.request.use(config => {
     return config;
 });
 
-// Axios response interceptor to handle errors
+// Axios response interceptor to handle errors and session expiration
 apiClient.interceptors.response.use(
     response => response,
     (error: AxiosError) => {
         if (error.response) {
             const apiError = error.response.data as { message?: string, error?: string, status?: number };
+            
+            // Handle session expiration or authentication failures
+            if (error.response.status === 401) {
+                console.warn('Session expired or unauthorized access detected');
+                // Clear any stored authentication data
+                localStorage.clear();
+                sessionStorage.clear();
+                // Redirect to login page
+                window.location.href = '/';
+                return Promise.reject(new Error('Session expired. Please log in again.'));
+            }
+            
+            // Handle CSRF token issues
+            if (error.response.status === 403) {
+                console.error('CSRF token validation failed or access forbidden');
+                // Try to refresh the page to get a new CSRF token
+                if (!document.cookie.includes('XSRF-TOKEN')) {
+                    console.warn('No CSRF token found, reloading page to obtain new token');
+                    window.location.reload();
+                }
+            }
+            
             console.error(
                 'API Error:', 
                 error.response.status, 

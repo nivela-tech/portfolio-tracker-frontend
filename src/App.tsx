@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 import { Layout, AuthProvider, useAuth } from './components/Layout'; // Import AuthProvider
+import { ProtectedRoute } from './components/ProtectedRoute'; // Import enhanced ProtectedRoute
 import { UserPreferencesProvider, useUserPreferences } from './contexts/UserPreferencesContext';
 import { AccountsPage } from './pages/AccountsPage';
 import { PortfolioViewPage } from './pages/PortfolioViewPage';
@@ -540,21 +541,6 @@ const darkTheme = createTheme({
     },
   },
 });
-
-// ProtectedRoute component
-const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const { isAuthenticated, authLoading } = useAuth(); // Use renamed properties
-
-  if (authLoading) {
-    return <div>Loading...</div>; // Or a spinner component
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
 
 // App wrapper that uses preferences
 const AppWithPreferences: React.FC = () => {

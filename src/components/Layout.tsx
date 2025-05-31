@@ -79,8 +79,7 @@ const getCookie = (name: string): string | null => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const navigate = useNavigate();
-  useEffect(() => {
+  const navigate = useNavigate();  useEffect(() => {
     const fetchUser = async () => {
       setAuthLoading(true);
       try {
@@ -102,6 +101,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           console.log('Response not ok:', response.status, response.statusText);
           setUser(null);
+          // If unauthorized, clear any stale authentication data
+          if (response.status === 401) {
+            localStorage.clear();
+            sessionStorage.clear();
+          }
         }
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -110,11 +114,92 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuthLoading(false);
       }
     };
+
     fetchUser();
-  }, []);
+  }, []); // Only run once on component mount
+
+  // Separate effect for session validation
+  useEffect(() => {
+    const validateSession = async () => {
+      if (user) {
+        try {
+          const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+          const response = await fetch(`${apiUrl}/api/auth/validate`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (!response.ok || response.status === 401) {
+            console.log('Session validation failed, clearing user state');
+            setUser(null);
+            localStorage.clear();
+            sessionStorage.clear();
+          }
+        } catch (error) {
+          console.error('Session validation error:', error);
+          // Don't clear user on network errors, only on auth failures
+        }
+      }
+    };
+
+    // Only set up interval if user is authenticated
+    if (user) {
+      const sessionCheckInterval = setInterval(validateSession, 5 * 60 * 1000); // 5 minutes
+      return () => clearInterval(sessionCheckInterval);
+    }
+  }, [user?.id]); // Only depend on user ID to avoid infinite loops
   const login = () => {
     window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:8080'}/oauth2/authorization/google`;
   };  const logout = async () => {
+    try {
+      // First try our dedicated logout endpoint with better session management
+      const csrfToken = getCookie('XSRF-TOKEN');
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      if (csrfToken) {
+        headers['X-XSRF-TOKEN'] = csrfToken;
+      }
+      
+      // Clear user state immediately to prevent UI flickering
+      setUser(null);
+      
+      const response = await fetch((process.env.REACT_APP_API_URL || 'http://localhost:8080') + '/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: headers,
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Logout successful:', result.message);
+        
+        // Clear any local storage or session storage if used
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Force clear any remaining cookies client-side
+        document.cookie.split(";").forEach(function(c) { 
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
+        
+        // Navigate to home page
+        navigate('/?logout=true');
+      } else {
+        console.warn('Logout endpoint failed, falling back to default logout');
+        // Fallback to default Spring Security logout
+        await fallbackLogout();
+      }
+    } catch (error) {
+      console.error('Logout failed, using fallback:', error);
+      await fallbackLogout();
+    }
+  };
+
+  const fallbackLogout = async () => {
     try {
       const csrfToken = getCookie('XSRF-TOKEN');
       const headers: HeadersInit = {
@@ -126,35 +211,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const response = await fetch((process.env.REACT_APP_API_URL || 'http://localhost:8080') + '/logout', {
         method: 'POST',
-        credentials: 'include', // Include cookies for session-based auth
+        credentials: 'include',
         headers: headers,
       });
       
-      setUser(null); 
-
+      // Clear state and storage regardless of response
+      setUser(null);
+      localStorage.clear();
+      sessionStorage.clear();
+      
       if (response.ok) {
-        // Check if the response is a redirect or if the URL changed
         if (response.redirected || response.url !== window.location.href) {
-          // If redirected by backend, let the browser handle it.
-          // If not, but URL implies logout (e.g. to landing), ensure frontend state is clear.
           if (response.url.includes('logout=true') || response.url.includes('/?logout=true')) {
             navigate('/');
           } else {
-            // If backend logout didn't redirect to landing, force it.
             window.location.href = process.env.REACT_APP_FRONTEND_URL || 'http://localhost:3000/';
           }
         } else {
-          // If no redirect from backend, manually navigate
           navigate('/');
         }
       } else {
-        console.error('Logout request failed:', response.status, response.statusText);
-        navigate('/'); // Fallback to landing page
+        console.error('Fallback logout request failed:', response.status, response.statusText);
+        navigate('/');
       }
     } catch (error) {
-      console.error('Logout failed:', error);
-      setUser(null); 
-      navigate('/'); // Fallback to landing page
+      console.error('Fallback logout failed:', error);
+      setUser(null);
+      navigate('/');
     }
   };
 
