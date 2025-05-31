@@ -35,7 +35,7 @@ import { NetWorthBox } from '../components/NetWorthBox';
 import { AccountList } from '../components/AccountList';
 import { ChartControls } from '../components/ChartControls';
 import { convertCurrency } from '../utils/currencyConverter';
-import { useAuth } from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
 import { usePortfolioData } from '../hooks/usePortfolioData';
 import { NetWorthSection } from '../components/NetWorthSection';
 import { PortfolioContent } from '../components/PortfolioContent';

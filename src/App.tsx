@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
-import { Layout, AuthProvider, useAuth } from './components/Layout'; // Import AuthProvider
+import { Layout, AuthProvider } from './components/Layout'; // Import AuthProvider
+import { useAuth } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute'; // Import enhanced ProtectedRoute
 import { UserPreferencesProvider, useUserPreferences } from './contexts/UserPreferencesContext';
 import { AccountsPage } from './pages/AccountsPage';

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { portfolioApi } from '../services/portfolioApi';
 import { accountApi } from '../services/accountApi';
 import { PortfolioEntry, PortfolioAccount } from '../types/portfolio';
-import { useAuth } from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
 
 export const usePortfolioData = (routeAccountId?: string) => {
     const { user } = useAuth();

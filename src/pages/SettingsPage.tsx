@@ -33,7 +33,7 @@ import {
 } from '@mui/icons-material';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { CURRENCIES, COUNTRIES } from '../utils/constants';
-import { useAuth } from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export const SettingsPage: React.FC = () => {

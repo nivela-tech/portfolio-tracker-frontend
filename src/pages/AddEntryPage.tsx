@@ -2,7 +2,7 @@ import React from 'react';
 import { Paper, Typography, Container, Button } from '@mui/material';
 import { AddEntryForm } from '../components/AddEntryForm';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export const AddEntryPage: React.FC = () => {

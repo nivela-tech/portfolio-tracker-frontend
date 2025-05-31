@@ -24,7 +24,7 @@ import { AccountsTable } from '../components/AccountsTable';
 import { useNavigate } from 'react-router-dom';
 import { PortfolioAccount } from '../types/portfolio';
 import { accountApi } from '../services/accountApi';
-import { useAuth } from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorDisplay } from '../components/ErrorDisplay';
 

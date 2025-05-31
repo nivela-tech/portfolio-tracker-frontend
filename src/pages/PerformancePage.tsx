@@ -14,7 +14,7 @@ import {
 import {
   Assessment as AssessmentIcon
 } from '@mui/icons-material';
-import { useAuth } from '../components/Layout';
+import { useAuth } from '../contexts/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ErrorDisplay } from '../components/ErrorDisplay';
 import PerformanceDashboard from '../components/PerformanceDashboard';
