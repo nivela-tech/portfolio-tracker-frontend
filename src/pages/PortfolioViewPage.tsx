@@ -210,9 +210,8 @@ export const PortfolioViewPage: React.FC = () => {
     }
 
     if (!user) {
-        return (
-            <Container sx={{ textAlign: 'center', mt: 5 }}>                <Typography variant="h5" gutterBottom>
-                    Welcome to Your Flamefolio
+        return (            <Container sx={{ textAlign: 'center', mt: 5 }}>                <Typography variant="h5" gutterBottom>
+                    Welcome to Your Agni Folio
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 3 }}>
                     Please sign in to manage and view your portfolios.

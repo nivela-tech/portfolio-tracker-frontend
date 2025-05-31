@@ -25,11 +25,10 @@ export const useUserPreferences = () => {
   const context = useContext(UserPreferencesContext);
   if (!context) {
     throw new Error('useUserPreferences must be used within a UserPreferencesProvider');
-  }
-  return context;
+  }  return context;
 };
 
-const STORAGE_KEY = 'flamefolio_user_preferences';
+const STORAGE_KEY = 'agnifolio_user_preferences';
 
 export const UserPreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);

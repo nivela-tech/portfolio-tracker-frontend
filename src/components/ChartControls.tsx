@@ -31,14 +31,13 @@ interface ChartControlsProps {
 export const ChartControls: React.FC<ChartControlsProps> = ({ chartType, groupBy, setChartType, setGroupBy }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
   const getGroupByIcon = (value: string) => {
     switch (value) {
-      case 'type': return <CategoryIcon fontSize="small" />;
-      case 'currency': return <CurrencyIcon fontSize="small" />;
-      case 'country': return <CountryIcon fontSize="small" />;
-      case 'source': return <SourceIcon fontSize="small" />;
-      default: return <CategoryIcon fontSize="small" />;
+      case 'type': return <CategoryIcon sx={{ fontSize: 18 }} />;
+      case 'currency': return <CurrencyIcon sx={{ fontSize: 18 }} />;
+      case 'country': return <CountryIcon sx={{ fontSize: 18 }} />;
+      case 'source': return <SourceIcon sx={{ fontSize: 18 }} />;
+      default: return <CategoryIcon sx={{ fontSize: 18 }} />;
     }
   };
 
@@ -117,15 +116,14 @@ export const ChartControls: React.FC<ChartControlsProps> = ({ chartType, groupBy
         direction={isMobile ? "column" : "row"} 
         spacing={isMobile ? 3 : 4} 
         alignItems={isMobile ? "stretch" : "flex-start"}
-      >
-        {/* Chart Type Section */}
+      >        {/* Chart Type Section - Compact */}
         <Box sx={{ flex: isMobile ? 'none' : 1 }}>
           <Typography 
             variant="subtitle2" 
             sx={{ 
               fontWeight: 600,
               color: theme.palette.text.primary,
-              mb: 2,
+              mb: 1,
               letterSpacing: '0.02em',
               display: 'flex',
               alignItems: 'center',
@@ -134,8 +132,8 @@ export const ChartControls: React.FC<ChartControlsProps> = ({ chartType, groupBy
           >
             <Box
               sx={{
-                width: 6,
-                height: 6,
+                width: 4,
+                height: 4,
                 borderRadius: '50%',
                 bgcolor: theme.palette.primary.main,
               }}
@@ -146,21 +144,21 @@ export const ChartControls: React.FC<ChartControlsProps> = ({ chartType, groupBy
             value={chartType}
             exclusive
             onChange={(e, value) => value && setChartType(value)}
-            size="medium"
+            size="small"
             fullWidth={isMobile}
             sx={{
               '& .MuiToggleButtonGroup-grouped': {
-                borderRadius: '12px !important',
+                borderRadius: '8px !important',
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                margin: '0 4px',
-                px: 3,
-                py: 1.5,
-                minHeight: 48,
+                margin: '0 2px',
+                px: 2,
+                py: 0.75,
+                minHeight: 36,
                 fontWeight: 600,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.2s ease-in-out',
                 '&:not(:first-of-type)': {
                   borderLeft: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                  marginLeft: '8px !important',
+                  marginLeft: '4px !important',
                 },
                 '&.Mui-selected': {
                   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
@@ -173,23 +171,23 @@ export const ChartControls: React.FC<ChartControlsProps> = ({ chartType, groupBy
                 '&:hover': {
                   backgroundColor: alpha(theme.palette.primary.main, 0.08),
                   transform: 'translateY(-1px)',
-                  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`,
+                  boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.12)}`,
                 },
               },
             }}
           >
             <ToggleButton value="pie">
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <PieChartIcon fontSize="small" />
-                <Typography variant="body2" fontWeight={600}>
+              <Stack direction="row" alignItems="center" spacing={0.75}>
+                <PieChartIcon sx={{ fontSize: 18 }} />
+                <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8rem' }}>
                   Pie Chart
                 </Typography>
               </Stack>
             </ToggleButton>
             <ToggleButton value="bar">
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <BarChartIcon fontSize="small" />
-                <Typography variant="body2" fontWeight={600}>
+              <Stack direction="row" alignItems="center" spacing={0.75}>
+                <BarChartIcon sx={{ fontSize: 18 }} />
+                <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8rem' }}>
                   Bar Chart
                 </Typography>
               </Stack>
@@ -206,16 +204,14 @@ export const ChartControls: React.FC<ChartControlsProps> = ({ chartType, groupBy
               borderColor: alpha(theme.palette.primary.main, 0.12) 
             }} 
           />
-        )}
-
-        {/* Group By Section */}
+        )}        {/* Group By Section - Compact */}
         <Box sx={{ flex: isMobile ? 'none' : 2 }}>
           <Typography 
             variant="subtitle2" 
             sx={{ 
               fontWeight: 600,
               color: theme.palette.text.primary,
-              mb: 2,
+              mb: 1,
               letterSpacing: '0.02em',
               display: 'flex',
               alignItems: 'center',
@@ -224,38 +220,37 @@ export const ChartControls: React.FC<ChartControlsProps> = ({ chartType, groupBy
           >
             <Box
               sx={{
-                width: 6,
-                height: 6,
+                width: 4,
+                height: 4,
                 borderRadius: '50%',
                 bgcolor: theme.palette.secondary.main,
               }}
             />
             Group Analysis By
-          </Typography>
-          <ToggleButtonGroup
+          </Typography>          <ToggleButtonGroup
             value={groupBy}
             exclusive
             onChange={(e, value) => value && setGroupBy(value)}
-            size="medium"
+            size="small"
             orientation={isMobile ? "vertical" : "horizontal"}
-            fullWidth
+            fullWidth={isMobile}
             sx={{
-              flexWrap: isMobile ? 'nowrap' : 'wrap',
-              gap: 1,
+              display: 'flex',
+              flexWrap: 'nowrap',
               '& .MuiToggleButtonGroup-grouped': {
-                borderRadius: '12px !important',
+                borderRadius: '8px !important',
                 border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
-                margin: '0 2px',
-                px: 2.5,
-                py: 1.5,
-                minHeight: 48,
-                minWidth: isMobile ? 'auto' : 120,
+                margin: '0 1px',
+                px: 1.25,
+                py: 0.75,
+                minHeight: 36,
+                flex: isMobile ? 'none' : 1,
                 fontWeight: 600,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.2s ease-in-out',
                 '&:not(:first-of-type)': {
                   borderLeft: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
-                  marginLeft: isMobile ? '0 !important' : '4px !important',
-                  marginTop: isMobile ? '4px !important' : '0 !important',
+                  marginLeft: isMobile ? '0 !important' : '2px !important',
+                  marginTop: isMobile ? '2px !important' : '0 !important',
                 },
                 '&.Mui-selected': {
                   background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
@@ -268,39 +263,38 @@ export const ChartControls: React.FC<ChartControlsProps> = ({ chartType, groupBy
                 '&:hover': {
                   backgroundColor: alpha(theme.palette.secondary.main, 0.08),
                   transform: 'translateY(-1px)',
-                  boxShadow: `0 4px 12px ${alpha(theme.palette.secondary.main, 0.15)}`,
+                  boxShadow: `0 2px 8px ${alpha(theme.palette.secondary.main, 0.12)}`,
                 },
               },
             }}
-          >
-            <ToggleButton value="type">
-              <Stack direction="row" alignItems="center" spacing={1}>
+          >            <ToggleButton value="type">
+              <Stack direction="row" alignItems="center" spacing={0.75}>
                 {getGroupByIcon('type')}
-                <Typography variant="body2" fontWeight={600}>
+                <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8rem' }}>
                   Type
                 </Typography>
               </Stack>
             </ToggleButton>
             <ToggleButton value="currency">
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction="row" alignItems="center" spacing={0.75}>
                 {getGroupByIcon('currency')}
-                <Typography variant="body2" fontWeight={600}>
+                <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8rem' }}>
                   Currency
                 </Typography>
               </Stack>
             </ToggleButton>
             <ToggleButton value="country">
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction="row" alignItems="center" spacing={0.75}>
                 {getGroupByIcon('country')}
-                <Typography variant="body2" fontWeight={600}>
+                <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8rem' }}>
                   Country
                 </Typography>
               </Stack>
             </ToggleButton>
             <ToggleButton value="source">
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction="row" alignItems="center" spacing={0.75}>
                 {getGroupByIcon('source')}
-                <Typography variant="body2" fontWeight={600}>
+                <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8rem' }}>
                   Source
                 </Typography>
               </Stack>

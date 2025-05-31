@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Paper, 
   Box, 
@@ -10,13 +10,14 @@ import {
   Divider,
   IconButton,
   Stack,
-  Chip
+  Chip,
+  Tooltip
 } from '@mui/material';
 import { 
   TrendingUp as TrendingUpIcon,
   AccountBalance as AccountBalanceIcon,
   Visibility as VisibilityIcon,
-  Settings as SettingsIcon
+  VisibilityOff as VisibilityOffIcon
 } from '@mui/icons-material';
 import { CURRENCIES } from '../utils/constants';
 
@@ -33,9 +34,14 @@ export const NetWorthBox: React.FC<NetWorthBoxProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [isHidden, setIsHidden] = useState(false);
 
   // Format large numbers in a professional way
   const formatCurrency = (amount: number) => {
+    if (isHidden) {
+      return '***';
+    }
+    
     const absAmount = Math.abs(amount);
     if (absAmount >= 1000000) {
       return `${selectedCurrency} ${(amount / 1000000).toFixed(2)}M`;
@@ -47,6 +53,23 @@ export const NetWorthBox: React.FC<NetWorthBoxProps> = ({
         maximumFractionDigits: 2
       })}`;
     }
+  };
+
+  const formatDetailedCurrency = (amount: number) => {
+    if (isHidden) {
+      return '*** *** ***';
+    }
+    
+    return amount.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      style: 'currency',
+      currency: selectedCurrency
+    });
+  };
+
+  const toggleVisibility = () => {
+    setIsHidden(!isHidden);
   };
 
   const getPerformanceColor = () => {
@@ -133,14 +156,22 @@ export const NetWorthBox: React.FC<NetWorthBoxProps> = ({
               </Box>
             </Box>
           </Box>
-          
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <IconButton size="small" sx={{ color: theme.palette.text.secondary }}>
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" sx={{ color: theme.palette.text.secondary }}>
-              <SettingsIcon fontSize="small" />
-            </IconButton>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+            <Tooltip title={isHidden ? "Show values" : "Hide values"}>
+              <IconButton 
+                size="small" 
+                onClick={toggleVisibility}
+                sx={{ 
+                  color: theme.palette.text.secondary,
+                  '&:hover': {
+                    color: theme.palette.primary.main,
+                    backgroundColor: theme.palette.primary.main + '0A'
+                  }
+                }}
+              >
+                {isHidden ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Stack>
       </Box>
@@ -168,8 +199,7 @@ export const NetWorthBox: React.FC<NetWorthBoxProps> = ({
             >
               {formatCurrency(totalNetWorth)}
             </Typography>
-            
-            {/* Professional detailed breakdown */}
+              {/* Professional detailed breakdown */}
             <Typography
               variant="caption"
               sx={{
@@ -180,12 +210,7 @@ export const NetWorthBox: React.FC<NetWorthBoxProps> = ({
                 fontSize: '0.75rem',
               }}
             >
-              {totalNetWorth.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-                style: 'currency',
-                currency: selectedCurrency
-              })}
+              {formatDetailedCurrency(totalNetWorth)}
             </Typography>
           </Box>
 

@@ -1,6 +1,6 @@
-# Flamefolio - Frontend
+# Agni Folio - Frontend
 
-This is the frontend for the Flamefolio application.
+This is the frontend for the Agni Folio application.
 
 It is built with React, TypeScript, and Material UI.
 

@@ -1,4 +1,4 @@
-# Flamefolio Quick Reference
+# Agni Folio Quick Reference
 
 ## Quick Start
 
